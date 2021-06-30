@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+UseTab: Never
+IndentWidth: 4
+IndentCaseLabels: false
+AlignAfterOpenBracket: AlwaysBreak
+BinPackArguments: false
+BinPackParameters: false
+ColumnLimit: 100
