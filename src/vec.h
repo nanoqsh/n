@@ -30,7 +30,15 @@ static void vec_drop_with(vec *self, hof *on_item, uw size) {
     vec_drop(self);
 }
 
-static void *vec_get(vec *self, uw i, uw size) { return self->data + i * size; }
+static void *vec_get(vec *self, uw i, uw size) {
+    DEBUG_ASSERT(i < self->len);
+    return self->data + i * size;
+}
+
+static void *vec_top(vec *self, uw size) {
+    DEBUG_ASSERT(self->len != 0);
+    return vec_get(self, self->len - 1, size);
+}
 
 static void vec_realloc(vec *self, uw cap, uw size) {
     self->data = cap == 0 ? NULL : realloc(self->data, cap * size);
@@ -42,15 +50,21 @@ static void vec_push(vec *self, void *value, uw size) {
         vec_realloc(self, self->cap == 0 ? 4 : self->cap * 2, size);
     }
 
-    void *next = vec_get(self, self->len, size);
-    self->len += 1;
+    uw len = self->len;
+    self->len = len + 1;
+    void *next = vec_get(self, len, size);
     memcpy(next, value, size);
 }
 
-static void vec_pop(vec *self) { self->len -= 1; }
+static void *vec_pop(vec *self, uw size) {
+    DEBUG_ASSERT(self->len != 0);
+    uw len = self->len - 1;
+    void *item = vec_get(self, len, size);
+    self->len = len;
+    return item;
+}
 
 static void vec_pop_with(vec *self, hof *on_item, uw size) {
-    vec_pop(self);
-    void *item = vec_get(self, self->len, size);
+    void *item = vec_pop(self, size);
     hof_call(on_item, item);
 }
