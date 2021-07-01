@@ -71,10 +71,10 @@ static void vec_pop_with(vec *self, hof on_item, word size) {
 }
 
 typedef struct {
-    seq_vt vt;
+    const seq_vt *vt;
     vec v;
     word ptr;
-    word size;
+    const word size;
 } vec_seq;
 
 static void *_vec_seq_next(vec_seq *self) {
@@ -87,11 +87,16 @@ static void *_vec_seq_next(vec_seq *self) {
     return vec_get(&self->v, ptr, self->size);
 }
 
+static void _vec_seq_drop(void *_) { (void)_; }
+
+const seq_vt VEC_SEQ_VT = {
+    .next = (void *(*)(void *))_vec_seq_next,
+    .drop = _vec_seq_drop,
+};
+
 static vec_seq vec_to_seq(vec self, word size) {
-    hof next = hof_new((hof_ptr)_vec_seq_next);
-    hof drop = hof_empty();
     return (vec_seq){
-        .vt = seq_new(next, drop),
+        .vt = &VEC_SEQ_VT,
         .v = self,
         .ptr = 0,
         .size = size,
