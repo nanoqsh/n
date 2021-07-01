@@ -14,5 +14,5 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-typedef size_t uw;
-typedef ssize_t iw;
+typedef size_t word;
+typedef ssize_t iword;
