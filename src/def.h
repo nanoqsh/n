@@ -19,3 +19,11 @@ void assertion_failed(const char *a, const char *file, unsigned int line) {
 #else
 #define DEBUG_ASSERT(a) NONE
 #endif
+
+#define FOR_IN(type, item, seq, body) {            \
+    __typeof(seq) _seq = (seq);                    \
+    seq_vt _vt = seq_from_obj(&_seq);              \
+    type item;                                     \
+    while (((item) = seq_next(&_vt, &_seq))) body; \
+    seq_drop(&_vt, &_seq);                         \
+}

@@ -2,11 +2,29 @@
 
 #include "def.h"
 
-typedef void (*hof_ptr)(void *, void *);
+typedef void *(*hof_ptr)(void *, void *);
 
 typedef struct {
     hof_ptr fn;
     void *data;
 } hof;
 
-static void hof_call(hof *self, void *args) { (*self->fn)(args, self->data); }
+static hof hof_from_data(hof_ptr fn, void *data) {
+    return (hof){
+        .fn = fn,
+        .data = data,
+    };
+}
+
+static hof hof_new(hof_ptr fn) { return hof_from_data(fn, NULL); }
+
+static hof hof_empty() { return hof_new(NULL); }
+
+static void *hof_call(hof self, void *args) {
+    hof_ptr fn = self.fn;
+    if (fn) {
+        return fn(args, self.data);
+    } else {
+        return NULL;
+    }
+}

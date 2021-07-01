@@ -1,26 +1,25 @@
 #include "def.h"
 #include "hof.h"
 #include "node.h"
+#include "seq.h"
 #include "vec.h"
 
 void print_int(const int *i) { printf("%d\n", *i); }
 
 void test_vec() {
     vec v = vec_new();
-    for (int i = 0; i < 12; ++i) {
+    for (int i = 0; i < 8; ++i) {
         vec_push(&v, &i, sizeof(int));
     }
 
     int top = *(int *)vec_top(&v, sizeof(int));
-    ASSERT(top == 11);
+    ASSERT(top == 7);
 
-    hof h = {
-        .fn = (hof_ptr)print_int,
-        .data = NULL,
-    };
+    FOR_IN(int*, item, vec_to_seq(v, sizeof(int)), {
+        printf("%d\n", *item);
+    })
 
-    vec_pop_with(&v, &h, sizeof(int));
-    vec_drop_with(&v, &h, sizeof(int));
+    vec_drop(&v);
 }
 
 void test_node() {
@@ -49,7 +48,7 @@ void test_node() {
         .fn = (hof_ptr)print_int,
         .data = NULL,
     };
-    node_drop_with(n, &h);
+    node_drop_with(n, h);
 }
 
 void test() {

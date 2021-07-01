@@ -2,6 +2,7 @@
 
 #include "def.h"
 #include "hof.h"
+#include "seq.h"
 
 typedef struct {
     u8 *data;
@@ -21,12 +22,10 @@ static vec vec_new() { return vec_with_cap(0, 0); }
 
 static void vec_drop(vec *self) { free(self->data); }
 
-static void vec_drop_with(vec *self, hof *on_item, word size) {
+static void vec_drop_with(vec *self, hof on_item, word size) {
     void *end = self->data + self->len * size;
-    if (on_item) {
-        for (u8 *item = self->data; item != end; item += size) {
-            hof_call(on_item, item);
-        }
+    for (u8 *item = self->data; item != end; item += size) {
+        hof_call(on_item, item);
     }
 
     vec_drop(self);
@@ -66,9 +65,35 @@ static void *vec_pop(vec *self, word size) {
     return item;
 }
 
-static void vec_pop_with(vec *self, hof *on_item, word size) {
+static void vec_pop_with(vec *self, hof on_item, word size) {
     void *item = vec_pop(self, size);
-    if (on_item) {
-        hof_call(on_item, item);
+    hof_call(on_item, item);
+}
+
+typedef struct {
+    seq_vt vt;
+    vec v;
+    word ptr;
+    word size;
+} vec_seq;
+
+static void *_vec_seq_next(vec_seq *self) {
+    if (self->ptr == self->v.len) {
+        return NULL;
     }
+
+    word ptr = self->ptr;
+    ++self->ptr;
+    return vec_get(&self->v, ptr, self->size);
+}
+
+static vec_seq vec_to_seq(vec self, word size) {
+    hof next = hof_new((hof_ptr)_vec_seq_next);
+    hof drop = hof_empty();
+    return (vec_seq){
+        .vt = seq_new(next, drop),
+        .v = self,
+        .ptr = 0,
+        .size = size,
+    };
 }
