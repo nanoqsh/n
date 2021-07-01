@@ -4,9 +4,10 @@
 #include "hof.h"
 
 typedef struct {
-    // Seq *seq, void *custom -> T*
+    // self* -> T*
     hof next;
-    // Seq *seq
+
+    // self*
     hof drop;
 } seq_vt;
 
