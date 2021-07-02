@@ -4,23 +4,26 @@
 #include "node.h"
 #include "seq.h"
 #include "vec.h"
+#include <alloca.h>
 
 void print_int(const int *i) { printf("%d\n", *i); }
 
 bool is_even(const int *i) { return *i % 2 == 0; }
 
+void doubler(int *i) { *i *= 2; }
+
 void test_vec() {
     vec v = vec_new();
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < 12; ++i) {
         vec_push(&v, &i, sizeof(int));
     }
 
-    int top = *(int *)vec_top(&v, sizeof(int));
-    ASSERT(top == 7);
-
     vec_iter iter = vec_to_iter(v, sizeof(int));
-    iter_filter filter = FILTER(iter, is_even);
-    FOR_IN(int *, item, filter, printf("%d\n", *item))
+    void *buf = alloca(sizeof(int));
+    iter_buffered buffered = BUFFERED(iter, buf, sizeof(int));
+    iter_filter filter = FILTER(buffered, is_even);
+    iter_update update = UPDATE(filter, doubler);
+    FOR_IN(int *, item, update, printf("%d\n", *item))
 
     vec_drop(&v);
 }
