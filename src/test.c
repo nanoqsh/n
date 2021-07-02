@@ -19,7 +19,7 @@ void test_vec() {
     ASSERT(top == 7);
 
     vec_iter iter = vec_to_iter(v, sizeof(int));
-    iter_filter filter = iter_filter_new(iter.seq_vt, &iter, (bool (*)(void *))is_even);
+    iter_filter filter = FILTER(iter, is_even);
     FOR_IN(int *, item, filter, printf("%d\n", *item))
 
     vec_drop(&v);

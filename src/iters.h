@@ -36,3 +36,5 @@ static iter_filter iter_filter_new(const seq_vt *inner_vt, void *inner, bool (*p
         .pred = pred,
     };
 }
+
+#define FILTER(iter, pred) (iter_filter_new((iter).seq_vt, &(iter), (bool (*)(void *))(pred)))
