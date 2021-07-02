@@ -1,10 +1,13 @@
 #include "def.h"
 #include "hof.h"
+#include "iters.h"
 #include "node.h"
 #include "seq.h"
 #include "vec.h"
 
 void print_int(const int *i) { printf("%d\n", *i); }
+
+bool is_even(const int *i) { return *i % 2 == 0; }
 
 void test_vec() {
     vec v = vec_new();
@@ -15,9 +18,9 @@ void test_vec() {
     int top = *(int *)vec_top(&v, sizeof(int));
     ASSERT(top == 7);
 
-    FOR_IN(int*, item, vec_to_seq(v, sizeof(int)), {
-        printf("%d\n", *item);
-    })
+    vec_iter iter = vec_to_iter(v, sizeof(int));
+    iter_filter filter = iter_filter_new(iter.seq_vt, &iter, (bool (*)(void *))is_even);
+    FOR_IN(int *, item, filter, printf("%d\n", *item))
 
     vec_drop(&v);
 }
