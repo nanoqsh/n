@@ -4,7 +4,6 @@
 #include "node.h"
 #include "seq.h"
 #include "vec.h"
-#include <alloca.h>
 
 void print_int(const int *i) { printf("%d\n", *i); }
 
@@ -19,8 +18,8 @@ void test_vec() {
     }
 
     vec_iter iter = vec_to_iter(&v, sizeof(int));
-    void *buf = alloca(sizeof(int));
-    iter_buffered buffered = BUFFERED(iter, buf, sizeof(int));
+    int buf;
+    iter_buffered buffered = BUFFERED(iter, &buf, sizeof(int));
     iter_filter filter = FILTER(buffered, is_even);
     iter_update update = UPDATE(filter, doubler);
     FOR_IN(int *, item, update, printf("%d\n", *item))
