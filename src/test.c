@@ -18,7 +18,7 @@ void test_vec() {
         vec_push(&v, &i, sizeof(int));
     }
 
-    vec_iter iter = vec_to_iter(v, sizeof(int));
+    vec_iter iter = vec_to_iter(&v, sizeof(int));
     void *buf = alloca(sizeof(int));
     iter_buffered buffered = BUFFERED(iter, buf, sizeof(int));
     iter_filter filter = FILTER(buffered, is_even);
