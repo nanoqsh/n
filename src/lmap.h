@@ -11,6 +11,11 @@ typedef struct {
     word len;
 } lmap;
 
+typedef struct {
+    void *key;
+    void *val;
+} lmap_pair;
+
 static lmap _lmap_with_table_size(word size) {
     // Check size is power of 2 or 0
     DEBUG_ASSERT((size & (size - 1)) == 0);
@@ -28,11 +33,37 @@ static lmap lmap_with_pow(word power_of_two) {
 
 static lmap lmap_new() { return _lmap_with_table_size(0); }
 
-// drop
-
 static word lmap_len(lmap *self) { return self->len; }
 
 static word lmap_table_size(lmap *self) { return self->table_mask + 1; }
+
+typedef struct {
+    hof on_item;
+    word key_size;
+} _lmap_for_each_info;
+
+static void _lmap_for_each_node(entry **en_ptr, _lmap_for_each_info *info) {
+    entry *en = *en_ptr;
+    lmap_pair pair = {
+        .key = entry_key(en),
+        .val = entry_val(en, info->key_size),
+    };
+    hof_call(info->on_item, &pair);
+}
+
+static void lmap_for_each(lmap *self, hof on_item, word key_size) {
+    _lmap_for_each_info info = {
+        .on_item = on_item,
+        .key_size = key_size,
+    };
+    word size = lmap_table_size(self);
+    for (word i = 0; i < size; ++i) {
+        node n = self->table[i];
+        node_for_each(n, HOF_WITH(_lmap_for_each_node, &info));
+    }
+}
+
+// drop
 
 typedef struct {
     u64 hash;

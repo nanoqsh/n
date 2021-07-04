@@ -21,6 +21,13 @@ static node node_new(fptr val) {
     return self;
 }
 
+static void node_for_each(node self, hof on_item) {
+    for (node curr = self; curr != NULL; curr = *node_tail(curr)) {
+        void *value = node_get(curr);
+        hof_call(on_item, value);
+    }
+}
+
 static void node_drop_with(node self, hof on_item) {
     node next;
     for (node curr = self; curr != NULL; curr = next) {
@@ -42,7 +49,7 @@ static void node_print(node self, void (*print_val)(const void *)) {
             print_val(val);
         }
     }
-    printf("null \n");
+    puts("null ");
 }
 
 // Connects node `a` with node `b` and returns tail of `a`.

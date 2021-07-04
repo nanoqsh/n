@@ -20,14 +20,17 @@ static vec vec_with_cap(word cap, word size) {
 
 static vec vec_new() { return vec_with_cap(0, 0); }
 
-static void vec_drop(vec *self) { free(self->data); }
-
-static void vec_drop_with(vec *self, hof on_item, word size) {
+static void vec_for_each(vec *self, hof on_item, word size) {
     void *end = self->data + self->len * size;
     for (u8 *item = self->data; item != end; item += size) {
         hof_call(on_item, item);
     }
+}
 
+static void vec_drop(vec *self) { free(self->data); }
+
+static void vec_drop_with(vec *self, hof on_item, word size) {
+    vec_for_each(self, on_item, size);
     vec_drop(self);
 }
 

@@ -71,8 +71,14 @@ bool int_cmp(const int *a, const int *b) {
     return res;
 }
 
+void print_ints(const lmap_pair *pair) {
+    int key = *(int *)pair->key;
+    int val = *(int *)pair->val;
+    printf("%d: %d\n", key, val);
+}
+
 void test_lmap() {
-    printf("--\n");
+    puts("--");
 
     lmap m = lmap_with_pow(3);
     ASSERT(lmap_len(&m) == 0);
@@ -89,6 +95,15 @@ void test_lmap() {
     ASSERT(!res);
     ASSERT(lmap_len(&m) == 1);
 
+    int key2 = 32;
+    int val2 = 6;
+    fptr fkey2 = FPTR(int, &key2);
+    fptr fval2 = FPTR(int, &val2);
+    res = lmap_insert(&m, fkey2, fval2, (hash_fn)int_hash);
+    ASSERT(res);
+    ASSERT(lmap_len(&m) == 2);
+
+    lmap_for_each(&m, HOF(print_ints), sizeof(int));
     lmap_print(&m);
 }
 
