@@ -31,6 +31,8 @@ static void vec_drop_with(vec *self, hof on_item, word size) {
     vec_drop(self);
 }
 
+static word vec_len(vec *self) { return self->len; }
+
 static void *vec_get(vec *self, word i, word size) {
     DEBUG_ASSERT(i < self->len);
     return self->data + i * size;

@@ -2,7 +2,7 @@
 
 #include "def.h"
 
-typedef void *(*hof_ptr)(void *, void *);
+typedef void *(*hof_ptr)(void *args, void *data);
 
 typedef struct {
     hof_ptr fn;

@@ -34,9 +34,13 @@ static void node_drop_with(node self, hof on_item) {
 
 static void node_drop(node self) { node_drop_with(self, hof_empty()); }
 
-static void node_print(node self) {
+static void node_print(node self, void (*print_val)(const void *)) {
     for (node curr = self; curr != NULL; curr = *node_tail(curr)) {
         printf("%p -> ", (void *)curr);
+        if (print_val) {
+            const void *val = node_get(curr);
+            print_val(val);
+        }
     }
     printf("null \n");
 }

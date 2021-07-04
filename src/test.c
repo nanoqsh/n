@@ -7,21 +7,23 @@
 #include "seq.h"
 #include "vec.h"
 
-bool is_even(const int *i) { return *i % 2 == 0; }
+bool is_multiple(const int *i, const int *j) { return *i % *j == 0; }
 
-void doubler(int *i) { *i *= 2; }
+void mul(int *i, const int *j) { *i *= *j; }
 
 void test_vec() {
     vec v = vec_new();
     for (int i = 0; i < 12; ++i) {
         vec_push(&v, &i, sizeof(int));
     }
+    ASSERT(vec_len(&v) == 12);
 
     vec_iter iter = vec_to_iter(&v, sizeof(int));
     int buf;
     iter_buffered buffered = BUFFERED(iter, &buf, sizeof(int));
-    iter_filter filter = FILTER(buffered, is_even);
-    iter_update update = UPDATE(filter, doubler);
+    int two = 2;
+    iter_filter filter = FILTER(buffered, HOF_WITH(is_multiple, &two));
+    iter_update update = UPDATE(filter, HOF_WITH(mul, &two));
     FOR_IN(int *, item, update, printf("%d\n", *item))
 
     vec_drop(&v);
@@ -38,7 +40,7 @@ void test_node() {
         ASSERT(actual == value1);
     }
 
-    node_print(n);
+    node_print(n, NULL);
 
     {
         node next = node_new(FPTR(int, &value2));
@@ -47,7 +49,7 @@ void test_node() {
         *node_tail(n) = next;
     }
 
-    node_print(n);
+    node_print(n, NULL);
     int find = 7;
     node found = node_find(n, FPTR(int, &find));
     ASSERT(found == *node_tail(n));
@@ -63,16 +65,30 @@ u64 int_hash(int *val) {
     return x;
 }
 
+bool int_cmp(const int *a, const int *b) {
+    bool res = *a == *b;
+    ASSERT(res);
+    return res;
+}
+
 void test_lmap() {
+    printf("--\n");
+
     lmap m = lmap_with_pow(3);
     ASSERT(lmap_len(&m) == 0);
 
     int key = 7;
     int val = 12;
-    lmap_insert(&m, FPTR(int, &key), FPTR(int, &val), (hash_fn)int_hash);
+    fptr fkey = FPTR(int, &key);
+    fptr fval = FPTR(int, &val);
+    bool res = lmap_insert(&m, fkey, fval, (hash_fn)int_hash);
+    ASSERT(res);
     ASSERT(lmap_len(&m) == 1);
 
-    printf("--\n");
+    res = lmap_insert_with_cmp(&m, fkey, fval, (hash_fn)int_hash, (cmp_fn)int_cmp);
+    ASSERT(!res);
+    ASSERT(lmap_len(&m) == 1);
+
     lmap_print(&m);
 }
 
