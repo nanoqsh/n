@@ -10,6 +10,11 @@ typedef struct {
     // V val;
 } entry;
 
+typedef struct {
+    void *key;
+    void *val;
+} entry_ptr;
+
 static entry *entry_new(u64 hash, fptr key, fptr val) {
     word size = sizeof(entry) + key.size + val.size;
     entry *data = malloc(size);
@@ -27,12 +32,9 @@ static void *entry_key(entry *self) { return self + 1; }
 
 static void *entry_val(entry *self, word key_size) { return (u8 *)(self + 1) + key_size; }
 
-static void entry_print(entry *self, void (*print_key_val)(const void *, const void *)) {
-    u64 hash = entry_hash(self);
-    printf("en: %zu ", hash);
-    if (print_key_val) {
-        const void *key = entry_key(self);
-        const void *val = entry_val(self, sizeof(int));
-        print_key_val(key, val);
-    }
+static entry_ptr entry_pair(entry *self, word key_size) {
+    return (entry_ptr){
+        .key = entry_key(self),
+        .val = entry_val(self, key_size),
+    };
 }

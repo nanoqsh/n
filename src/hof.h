@@ -1,7 +1,5 @@
 #pragma once
 
-#include "def.h"
-
 typedef void *(*hof_ptr)(void *args, void *data);
 
 typedef struct {

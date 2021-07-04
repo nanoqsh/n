@@ -40,8 +40,6 @@ void test_node() {
         ASSERT(actual == value1);
     }
 
-    node_print(n, NULL);
-
     {
         node next = node_new(FPTR(int, &value2));
         int actual = *(int *)node_get(next);
@@ -49,7 +47,6 @@ void test_node() {
         *node_tail(n) = next;
     }
 
-    node_print(n, NULL);
     int find = 7;
     node found = node_find(n, FPTR(int, &find));
     ASSERT(found == *node_tail(n));
@@ -71,7 +68,7 @@ bool int_cmp(const int *a, const int *b) {
     return res;
 }
 
-void print_ints(const lmap_pair *pair) {
+void print_ints(const entry_ptr *pair) {
     int key = *(int *)pair->key;
     int val = *(int *)pair->val;
     printf("%d: %d\n", key, val);
@@ -104,7 +101,6 @@ void test_lmap() {
     ASSERT(lmap_len(&m) == 2);
 
     lmap_for_each(&m, HOF(print_ints), sizeof(int));
-    lmap_print(&m);
 }
 
 void test() {

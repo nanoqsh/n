@@ -11,11 +11,6 @@ typedef struct {
     word len;
 } lmap;
 
-typedef struct {
-    void *key;
-    void *val;
-} lmap_pair;
-
 static lmap _lmap_with_table_size(word size) {
     // Check size is power of 2 or 0
     DEBUG_ASSERT((size & (size - 1)) == 0);
@@ -44,10 +39,7 @@ typedef struct {
 
 static void _lmap_for_each_node(entry **en_ptr, _lmap_for_each_info *info) {
     entry *en = *en_ptr;
-    lmap_pair pair = {
-        .key = entry_key(en),
-        .val = entry_val(en, info->key_size),
-    };
+    entry_ptr pair = entry_pair(en, info->key_size);
     hof_call(info->on_item, &pair);
 }
 
@@ -115,12 +107,4 @@ static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn
 
 static bool lmap_insert(lmap *self, fptr key, fptr val, hash_fn hash_fn) {
     return lmap_insert_with_cmp(self, key, val, hash_fn, NULL);
-}
-
-static void lmap_print(lmap *self) {
-    word size = lmap_table_size(self);
-    for (word i = 0; i < size; ++i) {
-        node n = self->table[i];
-        node_print(n, NULL);
-    }
 }
