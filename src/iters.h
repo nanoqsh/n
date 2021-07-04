@@ -25,8 +25,8 @@ static void *_iter_buffered_next(iter_buffered *self) {
 static void _iter_buffered_drop(iter_buffered *self) { seq_drop(self->inner_vt, self->inner); }
 
 const seq_vt ITER_BUFFERED_DYN_SEQ = {
-    .next = (void *(*)(void *))_iter_buffered_next,
-    .drop = (void (*)(void *))_iter_buffered_drop,
+    .next = (seq_next_fn)_iter_buffered_next,
+    .drop = (seq_drop_fn)_iter_buffered_drop,
 };
 
 static iter_buffered iter_buffered_new(const seq_vt *inner_vt, void *inner, void *buf, word len) {
@@ -63,8 +63,8 @@ static void *_iter_filter_next(iter_filter *self) {
 static void _iter_filter_drop(iter_filter *self) { seq_drop(self->inner_vt, self->inner); }
 
 const seq_vt ITER_FILTER_DYN_SEQ = {
-    .next = (void *(*)(void *))_iter_filter_next,
-    .drop = (void (*)(void *))_iter_filter_drop,
+    .next = (seq_next_fn)_iter_filter_next,
+    .drop = (seq_drop_fn)_iter_filter_drop,
 };
 
 static iter_filter iter_filter_new(const seq_vt *inner_vt, void *inner, hof pred) {
@@ -99,8 +99,8 @@ static void *_iter_update_next(iter_update *self) {
 static void _iter_update_drop(iter_update *self) { seq_drop(self->inner_vt, self->inner); }
 
 const seq_vt ITER_UPDATE_DYN_SEQ = {
-    .next = (void *(*)(void *))_iter_update_next,
-    .drop = (void (*)(void *))_iter_update_drop,
+    .next = (seq_next_fn)_iter_update_next,
+    .drop = (seq_drop_fn)_iter_update_drop,
 };
 
 static iter_update iter_update_new(const seq_vt *inner_vt, void *inner, hof update) {

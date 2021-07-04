@@ -89,8 +89,7 @@ static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn
         .key = key,
         .cmp_fn = cmp_fn,
     };
-    node found = node_find_with(*cell, HOF_WITH(_lmap_find_key, &info));
-    if (found) {
+    if (node_find_with(*cell, HOF_WITH(_lmap_find_key, &info))) {
         return false;
     }
 

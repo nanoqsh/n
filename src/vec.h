@@ -95,7 +95,7 @@ static void *_vec_iter_next(vec_iter *self) {
 static void _vec_iter_drop(void *_) { (void)_; }
 
 const seq_vt VEC_ITER_DYN_SEQ = {
-    .next = (void *(*)(void *))_vec_iter_next,
+    .next = (seq_next_fn)_vec_iter_next,
     .drop = _vec_iter_drop,
 };
 
