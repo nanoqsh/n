@@ -1,11 +1,11 @@
 #include "def.h"
+#include "fptr.h"
 #include "hof.h"
 #include "iters.h"
+#include "lmap.h"
 #include "node.h"
 #include "seq.h"
 #include "vec.h"
-
-void print_int(const int *i) { printf("%d\n", *i); }
 
 bool is_even(const int *i) { return *i % 2 == 0; }
 
@@ -33,7 +33,7 @@ void test_node() {
     int value2 = 7;
 
     {
-        n = node_new(&value1, sizeof(int));
+        n = node_new(FPTR(int, &value1));
         int actual = *(int *)node_get(n);
         ASSERT(actual == value1);
     }
@@ -41,22 +41,43 @@ void test_node() {
     node_print(n);
 
     {
-        node next = node_new(&value2, sizeof(int));
+        node next = node_new(FPTR(int, &value2));
         int actual = *(int *)node_get(next);
         ASSERT(actual == value2);
-        *node_next(n) = next;
+        *node_tail(n) = next;
     }
 
     node_print(n);
+    int find = 7;
+    node found = node_find(n, FPTR(int, &find));
+    ASSERT(found == *node_tail(n));
 
-    hof h = {
-        .fn = (hof_ptr)print_int,
-        .data = NULL,
-    };
-    node_drop_with(n, h);
+    node_drop(n);
+}
+
+u64 int_hash(int *val) {
+    int x = *val;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
+void test_lmap() {
+    lmap m = lmap_with_pow(3);
+    ASSERT(lmap_len(&m) == 0);
+
+    int key = 7;
+    int val = 12;
+    lmap_insert(&m, FPTR(int, &key), FPTR(int, &val), (hash_fn)int_hash);
+    ASSERT(lmap_len(&m) == 1);
+
+    printf("--\n");
+    lmap_print(&m);
 }
 
 void test() {
     test_vec();
     test_node();
+    test_lmap();
 }
