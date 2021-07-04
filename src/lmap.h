@@ -54,19 +54,13 @@ static bool _lmap_find_key(entry **en_ptr, _lmap_find_key_info *info) {
     }
 }
 
-static void _lmap_entry_print_int_int(const int *key, const int *val) {
-    printf("(key: %d, val: %d) ", *key, *val);
-}
-
-static void _lmap_node_print_entry(entry **en_ptr) {
-    entry_print(*en_ptr, (void (*)(const void *, const void *))_lmap_entry_print_int_int);
-}
-
 static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn, cmp_fn cmp_fn) {
+    // Get hash and table index
     u64 hash = hash_fn(key.data);
     word idx = (word)hash & self->table_mask;
     node *cell = self->table + idx;
 
+    // Check is the key already in map
     _lmap_find_key_info info = {
         .hash = hash,
         .key = key,
@@ -77,13 +71,14 @@ static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn
         return false;
     }
 
+    // If the key is new, insert it in list
     entry *new_entry = entry_new(hash, key, val);
     node new_node = node_new(FPTR(entry *, &new_entry));
     node tail = node_connect(new_node, *cell);
     DEBUG_ASSERT(tail == NULL);
     ++self->len;
-
     *cell = new_node;
+
     return true;
 }
 
@@ -95,6 +90,6 @@ static void lmap_print(lmap *self) {
     word size = lmap_table_size(self);
     for (word i = 0; i < size; ++i) {
         node n = self->table[i];
-        node_print(n, (void (*)(const void *))_lmap_node_print_entry);
+        node_print(n, NULL);
     }
 }

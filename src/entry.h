@@ -35,5 +35,4 @@ static void entry_print(entry *self, void (*print_key_val)(const void *, const v
         const void *val = entry_val(self, sizeof(int));
         print_key_val(key, val);
     }
-    putchar('\n');
 }
