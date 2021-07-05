@@ -4,6 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NEW(type, ...) (type ## _new(__VA_ARGS__))
+
+#define LEN(type, obj) (type ## _len(obj))
+
+#define DROP(type, obj) (type ## _drop(obj))
+
+#define DROP_WITH(type, obj, ...) (type ## _drop_with(obj, __VA_ARGS__))
+
 #define NONE ((void)0)
 
 void assertion_failed(const char *a, const char *file, unsigned int line) {

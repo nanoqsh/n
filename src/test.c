@@ -12,11 +12,11 @@ bool is_multiple(const int *i, const int *j) { return *i % *j == 0; }
 void mul(int *i, const int *j) { *i *= *j; }
 
 void test_vec() {
-    vec v = vec_new();
+    vec v = NEW(vec,);
     for (int i = 0; i < 12; ++i) {
         vec_push(&v, &i, sizeof(int));
     }
-    ASSERT(vec_len(&v) == 12);
+    ASSERT(LEN(vec, &v) == 12);
 
     vec_iter iter = vec_to_iter(&v, sizeof(int));
     int buf;
@@ -26,7 +26,7 @@ void test_vec() {
     iter_update update = UPDATE(filter, HOF_WITH(mul, &two));
     FOR_IN(int *, item, update, printf("%d\n", *item))
 
-    vec_drop(&v);
+    DROP(vec, &v);
 }
 
 void test_node() {
@@ -35,13 +35,13 @@ void test_node() {
     int value2 = 7;
 
     {
-        n = node_new(FPTR(int, &value1));
+        n = NEW(node, FPTR(int, &value1));
         int actual = *(int *)node_get(n);
         ASSERT(actual == value1);
     }
 
     {
-        node next = node_new(FPTR(int, &value2));
+        node next = NEW(node, FPTR(int, &value2));
         int actual = *(int *)node_get(next);
         ASSERT(actual == value2);
         *node_tail(n) = next;
@@ -51,7 +51,7 @@ void test_node() {
     node found = node_find(n, FPTR(int, &find));
     ASSERT(found == *node_tail(n));
 
-    node_drop(n);
+    DROP(node, n);
 }
 
 u64 int_hash(int *val) {
@@ -84,22 +84,22 @@ void test_lmap() {
     fptr fval = FPTR(int, &val);
     bool res = lmap_insert(&m, fkey, fval, (hash_fn)int_hash);
     ASSERT(res);
-    ASSERT(lmap_len(&m) == 1);
+    ASSERT(LEN(lmap, &m) == 1);
 
     res = lmap_insert_with_cmp(&m, fkey, fval, (hash_fn)int_hash, (cmp_fn)int_cmp);
     ASSERT(!res);
-    ASSERT(lmap_len(&m) == 1);
+    ASSERT(LEN(lmap, &m) == 1);
 
     for (word i = 0; i < 12; ++i) {
         fptr fkey = FPTR(int, &i);
         fptr fval = FPTR(int, &i);
         res = lmap_insert_with_cmp(&m, fkey, fval, (hash_fn)int_hash, (cmp_fn)int_cmp);
         ASSERT(res);
-        ASSERT(lmap_len(&m) == i + 2);
+        ASSERT(LEN(lmap, &m) == i + 2);
     }
 
     puts("--");
-    lmap_drop_with(&m, HOF(print_ints), sizeof(int));
+    DROP_WITH(lmap, &m, HOF(print_ints), sizeof(int));
 }
 
 void test() {
