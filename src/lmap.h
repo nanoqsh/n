@@ -32,6 +32,16 @@ static word lmap_len(lmap *self) { return self->len; }
 
 static word lmap_table_size(lmap *self) { return self->table_mask + 1; }
 
+static float lmap_load_factor(lmap *self) {
+    word table_size = lmap_table_size(self);
+    if (table_size == 0) {
+        return 0.;
+    }
+
+    float len = (float)lmap_len(self);
+    return len / (float)table_size;
+}
+
 typedef struct {
     hof on_item;
     word key_size;
@@ -75,6 +85,34 @@ static void lmap_drop_with(lmap *self, hof on_item, word key_size) {
 
 static void lmap_drop(lmap *self) { lmap_drop_with(self, hof_empty(), 0); }
 
+static void lmap_realloc(lmap *self, word power_of_two) {
+    node *table = self->table;
+    word size = lmap_table_size(self);
+    word len = lmap_len(self);
+    *self = lmap_with_pow(power_of_two);
+
+    for (word i = 0; i < size; ++i) {
+        node n = table[i];
+        node next;
+        for (node curr = n; curr != NULL; curr = next) {
+            node *tail = node_tail(curr);
+            next = *tail;
+            *tail = NULL;
+
+            const entry *en = *(entry **)node_get(curr);
+            u64 hash = entry_hash(en);
+            word idx = (word)hash & self->table_mask;
+            node *cell = self->table + idx;
+
+            node_connect(curr, *cell);
+            *cell = curr;
+        }
+    }
+
+    free(table);
+    self->len = len;
+}
+
 typedef struct {
     u64 hash;
     fptr key;
@@ -91,7 +129,7 @@ static bool _lmap_find_key(entry **en_ptr, _lmap_find_key_info *info) {
     }
 
     // Compare keys if there is a `cmp_fn`
-    // Otherwise compare bit by bit 
+    // Otherwise compare bit by bit
     void *key = entry_key(en);
     if (info->cmp_fn) {
         return info->cmp_fn(key, info->key.data);
@@ -101,19 +139,42 @@ static bool _lmap_find_key(entry **en_ptr, _lmap_find_key_info *info) {
 }
 
 static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn, cmp_fn cmp_fn) {
+    bool empty = !self->table;
+
+    // If table is empty, create it
+    if (empty) {
+        *self = lmap_with_pow(3);
+    }
+
     // Get hash and table index
     u64 hash = hash_fn(key.data);
     word idx = (word)hash & self->table_mask;
     node *cell = self->table + idx;
 
-    // Check is the key already in map
-    _lmap_find_key_info info = {
-        .hash = hash,
-        .key = key,
-        .cmp_fn = cmp_fn,
-    };
-    if (node_find_with(*cell, HOF_WITH(_lmap_find_key, &info))) {
-        return false;
+    if (!empty) {
+        // Check is the key already in map
+        _lmap_find_key_info info = {
+            .hash = hash,
+            .key = key,
+            .cmp_fn = cmp_fn,
+        };
+        if (node_find_with(*cell, HOF_WITH(_lmap_find_key, &info))) {
+            return false;
+        }
+
+        // Check load factor and realloc if necessary
+        if (lmap_load_factor(self) > 3.) {
+            word size = lmap_table_size(self);
+            DEBUG_ASSERT(size != 0);
+            int pow = 1;
+            while (size >>= 1) {
+                ++pow;
+            }
+
+            lmap_realloc(self, pow);
+            idx = (word)hash & self->table_mask;
+            cell = self->table + idx;
+        }
     }
 
     // If the key is new, insert it in list
