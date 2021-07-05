@@ -166,7 +166,7 @@ static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn
         if (lmap_load_factor(self) > 3.) {
             word size = lmap_table_size(self);
             DEBUG_ASSERT(size != 0);
-            int pow = 1;
+            word pow = 1;
             while (size >>= 1) {
                 ++pow;
             }
@@ -190,4 +190,31 @@ static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn
 
 static bool lmap_insert(lmap *self, fptr key, fptr val, hash_fn hash_fn) {
     return lmap_insert_with_cmp(self, key, val, hash_fn, NULL);
+}
+
+static void *lmap_get_with_cmp(lmap *self, fptr key, hash_fn hash_fn, cmp_fn cmp_fn) {
+    if (lmap_len(self) == 0) {
+        return NULL;
+    }
+
+    u64 hash = hash_fn(key.data);
+    word idx = (word)hash & self->table_mask;
+    node *cell = self->table + idx;
+
+    _lmap_find_key_info info = {
+        .hash = hash,
+        .key = key,
+        .cmp_fn = cmp_fn,
+    };
+    node found = node_find_with(*cell, HOF_WITH(_lmap_find_key, &info));
+    if (found) {
+        entry *en = *(entry **)node_get(found);
+        return entry_val(en, key.size);
+    }
+
+    return NULL;
+}
+
+static void *lmap_get(lmap *self, fptr key, hash_fn hash_fn) {
+    return lmap_get_with_cmp(self, key, hash_fn, NULL);
 }

@@ -12,7 +12,7 @@ bool is_multiple(const int *i, const int *j) { return *i % *j == 0; }
 void mul(int *i, const int *j) { *i *= *j; }
 
 void test_vec() {
-    vec v = NEW(vec,);
+    vec v = NEW(vec, );
     for (int i = 0; i < 12; ++i) {
         vec_push(&v, &i, sizeof(int));
     }
@@ -75,7 +75,7 @@ void print_ints(const entry_ptr *pair) {
 }
 
 void test_lmap() {
-    lmap m = NEW(lmap,);
+    lmap m = NEW(lmap, );
     ASSERT(lmap_len(&m) == 0);
 
     int key = 123;
@@ -90,12 +90,20 @@ void test_lmap() {
     ASSERT(!res);
     ASSERT(LEN(lmap, &m) == 1);
 
-    for (word i = 1; i < 100; ++i) {
+    word n = 100;
+    for (word i = 1; i < n; ++i) {
         fptr key = FPTR(int, &i);
         fptr val = FPTR(int, &i);
         res = lmap_insert_with_cmp(&m, key, val, (hash_fn)int_hash, (cmp_fn)int_cmp);
         ASSERT(res);
         ASSERT(LEN(lmap, &m) == i + 1);
+    }
+
+    for (word i = 1; i < n; ++i) {
+        fptr key = FPTR(int, &i);
+        int *val = lmap_get_with_cmp(&m, key, (hash_fn)int_hash, (cmp_fn)int_cmp);
+        ASSERT(val);
+        ASSERT(*val == (int)i);
     }
 
     puts("--");
