@@ -38,3 +38,11 @@ static entry_ptr entry_pair(entry *self, word key_size) {
         .val = entry_val(self, key_size),
     };
 }
+
+static void entry_drop(entry *self) { free(self); }
+
+static void entry_drop_with(entry *self, hof on_item, word key_size) {
+    entry_ptr pair = entry_pair(self, key_size);
+    hof_call(on_item, &pair);
+    entry_drop(self);
+}

@@ -75,12 +75,10 @@ void print_ints(const entry_ptr *pair) {
 }
 
 void test_lmap() {
-    puts("--");
-
     lmap m = lmap_with_pow(3);
     ASSERT(lmap_len(&m) == 0);
 
-    int key = 7;
+    int key = 65;
     int val = 12;
     fptr fkey = FPTR(int, &key);
     fptr fval = FPTR(int, &val);
@@ -92,15 +90,16 @@ void test_lmap() {
     ASSERT(!res);
     ASSERT(lmap_len(&m) == 1);
 
-    int key2 = 32;
-    int val2 = 6;
-    fptr fkey2 = FPTR(int, &key2);
-    fptr fval2 = FPTR(int, &val2);
-    res = lmap_insert(&m, fkey2, fval2, (hash_fn)int_hash);
-    ASSERT(res);
-    ASSERT(lmap_len(&m) == 2);
+    for (word i = 0; i < 12; ++i) {
+        fptr fkey = FPTR(int, &i);
+        fptr fval = FPTR(int, &i);
+        res = lmap_insert_with_cmp(&m, fkey, fval, (hash_fn)int_hash, (cmp_fn)int_cmp);
+        ASSERT(res);
+        ASSERT(lmap_len(&m) == i + 2);
+    }
 
-    lmap_for_each(&m, HOF(print_ints), sizeof(int));
+    puts("--");
+    lmap_drop_with(&m, HOF(print_ints), sizeof(int));
 }
 
 void test() {
