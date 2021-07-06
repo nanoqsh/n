@@ -1,6 +1,6 @@
 #pragma once
 
-#include "def.h"
+#include "../def.h"
 
 typedef void *(*seq_next_fn)(void *);
 typedef void (*seq_drop_fn)(void *);

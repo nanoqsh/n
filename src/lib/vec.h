@@ -1,7 +1,6 @@
 #pragma once
 
-#include "def.h"
-#include "hof.h"
+#include "../def.h"
 #include "seq.h"
 
 typedef struct {
@@ -33,6 +32,10 @@ static void vec_drop_with(vec *self, hof on_item, word size) {
     vec_for_each(self, on_item, size);
     vec_drop(self);
 }
+
+static void *vec_data(vec *self) { return self->data; }
+
+static word vec_cap(vec *self) { return self->cap; }
 
 static word vec_len(vec *self) { return self->len; }
 
@@ -68,11 +71,6 @@ static void *vec_pop(vec *self, word size) {
     void *item = vec_get(self, len, size);
     self->len = len;
     return item;
-}
-
-static void vec_pop_with(vec *self, hof on_item, word size) {
-    void *item = vec_pop(self, size);
-    hof_call(on_item, item);
 }
 
 typedef struct {

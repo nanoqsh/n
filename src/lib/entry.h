@@ -1,7 +1,6 @@
 #pragma once
 
-#include "def.h"
-#include "fptr.h"
+#include "../def.h"
 #include "node.h"
 
 typedef struct {

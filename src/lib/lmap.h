@@ -1,6 +1,6 @@
 #pragma once
 
-#include "def.h"
+#include "../def.h"
 #include "entry.h"
 #include "node.h"
 #include <string.h>
@@ -14,11 +14,18 @@ typedef struct {
 static lmap _lmap_with_table_size(word size) {
     // Check size is power of 2 or 0
     DEBUG_ASSERT((size & (size - 1)) == 0);
-    return (lmap){
-        .table = size == 0 ? NULL : calloc(size, sizeof(void *)),
-        .table_mask = size - 1,
-        .len = 0,
-    };
+    lmap self;
+    self.len = 0;
+
+    if (size == 0) {
+        self.table = NULL;
+        self.table_mask = 0;
+    } else {
+        self.table = calloc(size, sizeof(void *));
+        self.table_mask = size - 1;
+    }
+
+    return self;
 }
 
 static lmap lmap_with_pow(word power_of_two) {
@@ -30,7 +37,13 @@ static lmap lmap_new() { return _lmap_with_table_size(0); }
 
 static word lmap_len(lmap *self) { return self->len; }
 
-static word lmap_table_size(lmap *self) { return self->table_mask + 1; }
+static word lmap_table_size(lmap *self) {
+    if (self->table) {
+        return self->table_mask + 1;
+    }
+
+    return 0;
+}
 
 static float lmap_load_factor(lmap *self) {
     word table_size = lmap_table_size(self);

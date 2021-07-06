@@ -1,6 +1,9 @@
-#include "test.h"
+#include "test/test.h"
 
 int main() {
-    test();
+    test_entry();
+    test_lmap();
+    test_vec();
+
     return 0;
 }

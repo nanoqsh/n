@@ -1,8 +1,6 @@
 #pragma once
 
-#include "def.h"
-#include "fptr.h"
-#include "hof.h"
+#include "../def.h"
 #include <string.h>
 
 // node -> node next
