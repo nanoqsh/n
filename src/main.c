@@ -1,9 +1,12 @@
 #include "test/test.h"
 
 int main() {
-    test_entry();
-    test_lmap();
-    test_vec();
+    TEST_RUN(entry);
+    TEST_RUN(lmap);
+    TEST_RUN(node);
+    TEST_RUN(vec);
+
+    puts("Ok");
 
     return 0;
 }

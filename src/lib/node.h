@@ -39,6 +39,27 @@ static void node_drop_with(node self, hof on_item) {
 
 static void node_drop(node self) { node_drop_with(self, hof_empty()); }
 
+static word node_count(node self) {
+    word counter = 0;
+    for (node curr = self; curr != NULL; curr = *node_tail(curr)) {
+        ++counter;
+    }
+
+    return counter;
+}
+
+static node node_last(node self) {
+    if (!self) {
+        return NULL;
+    }
+
+    node curr = self;
+    for (node next; (next = *node_tail(curr)); curr = next) {
+        //
+    }
+    return curr;
+}
+
 // Connects node `a` with node `b` and returns tail of `a`.
 // `b` node may be NULL.
 static node node_connect(node a, node b) {
@@ -46,6 +67,23 @@ static node node_connect(node a, node b) {
     node tail = *tail_ptr;
     *tail_ptr = b;
     return tail;
+}
+
+static node node_push_front(node self, fptr val) {
+    node n = node_new(val);
+    node_connect(n, self);
+    return n;
+}
+
+static node node_push_back(node self, fptr val) {
+    node n = node_new(val);
+    if (!self) {
+        return n;
+    }
+
+    node last = node_last(self);
+    node_connect(last, n);
+    return self;
 }
 
 static node node_find_with(node self, hof pred) {
