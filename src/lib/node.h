@@ -20,7 +20,7 @@ static node node_new(fptr val) {
 }
 
 static void node_for_each(node self, hof on_item) {
-    for (node curr = self; curr != NULL; curr = *node_tail(curr)) {
+    for (node curr = self; curr; curr = *node_tail(curr)) {
         void *value = node_get(curr);
         hof_call(on_item, value);
     }
@@ -28,7 +28,7 @@ static void node_for_each(node self, hof on_item) {
 
 static void node_drop_with(node self, hof on_item) {
     node next;
-    for (node curr = self; curr != NULL; curr = next) {
+    for (node curr = self; curr; curr = next) {
         void *value = node_get(curr);
         hof_call(on_item, value);
 
@@ -41,7 +41,7 @@ static void node_drop(node self) { node_drop_with(self, hof_empty()); }
 
 static word node_count(node self) {
     word counter = 0;
-    for (node curr = self; curr != NULL; curr = *node_tail(curr)) {
+    for (node curr = self; curr; curr = *node_tail(curr)) {
         ++counter;
     }
 
@@ -87,7 +87,7 @@ static node node_push_back(node self, fptr val) {
 }
 
 static node node_find_with(node self, hof pred) {
-    for (node curr = self; curr != NULL; curr = *node_tail(curr)) {
+    for (node curr = self; curr; curr = *node_tail(curr)) {
         void *data = node_get(curr);
         if (hof_call(pred, data)) {
             return curr;

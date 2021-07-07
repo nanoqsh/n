@@ -10,6 +10,6 @@ typedef struct {
     seq_drop_fn drop;
 } seq_vt;
 
-static void *seq_next(const seq_vt *seq, void *self) { return seq->next(self); }
+static void *seq_next(vptr self) { return ((seq_vt *)self.vt)->next(self.data); }
 
-static void seq_drop(const seq_vt *seq, void *self) { seq->drop(self); }
+static void seq_drop(vptr self) { ((seq_vt *)self.vt)->drop(self.data); }

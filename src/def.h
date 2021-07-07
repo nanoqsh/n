@@ -3,6 +3,7 @@
 #include "lib/fptr.h"
 #include "lib/hof.h"
 #include "lib/types.h"
+#include "lib/vptr.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -23,12 +24,4 @@ static void assertion_failed(const char *a, const char *file, unsigned int line)
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 
-#define FOR_IN(type, item, seq, body)                                                              \
-    {                                                                                              \
-        __typeof__(seq) _seq = (seq);                                                              \
-        const seq_vt *_vt = _seq.seq_vt;                                                           \
-        type item;                                                                                 \
-        while (((item) = seq_next(_vt, &_seq)))                                                    \
-            body;                                                                                  \
-        seq_drop(_vt, &_seq);                                                                      \
-    }
+#define DYN(proto, type, obj) (vptr_new((obj), &VT_##type##_FOR_##proto))

@@ -7,7 +7,7 @@ static void new_drop() {
     u32 val = 12;
     node n = node_new(FPTR(u32, &val));
 
-    ASSERT(*node_tail(n) == NULL);
+    ASSERT(!*node_tail(n));
     ASSERT(*(u32 *)node_get(n) == 12);
     ASSERT(node_count(n) == 1);
 
@@ -20,7 +20,7 @@ static void drop_with() {
     u32 val = 12;
     node n = node_new(FPTR(u32, &val));
 
-    ASSERT(*node_tail(n) == NULL);
+    ASSERT(!*node_tail(n));
     ASSERT(*(u32 *)node_get(n) == 12);
     ASSERT(node_count(n) == 1);
 
@@ -33,12 +33,12 @@ static void connect_count() {
     node b = node_new(FPTR(u32, &val));
     node c = node_new(FPTR(u32, &val));
 
-    ASSERT(node_connect(a, b) == NULL);
+    ASSERT(!node_connect(a, b));
     ASSERT(node_count(a) == 2);
     ASSERT(node_count(b) == 1);
     ASSERT(node_count(c) == 1);
 
-    ASSERT(node_connect(b, c) == NULL);
+    ASSERT(!node_connect(b, c));
     ASSERT(node_count(a) == 3);
     ASSERT(node_count(b) == 2);
     ASSERT(node_count(c) == 1);

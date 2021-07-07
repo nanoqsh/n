@@ -107,7 +107,7 @@ static void lmap_realloc(lmap *self, word power_of_two) {
     for (word i = 0; i < size; ++i) {
         node n = table[i];
         node next;
-        for (node curr = n; curr != NULL; curr = next) {
+        for (node curr = n; curr; curr = next) {
             node *tail = node_tail(curr);
             next = *tail;
             *tail = NULL;
@@ -194,7 +194,7 @@ static bool lmap_insert_with_cmp(lmap *self, fptr key, fptr val, hash_fn hash_fn
     entry *new_entry = entry_new(hash, key, val);
     node new_node = node_new(FPTR(entry *, &new_entry));
     node tail = node_connect(new_node, *cell);
-    DEBUG_ASSERT(tail == NULL);
+    DEBUG_ASSERT(!tail);
     ++self->len;
     *cell = new_node;
 
