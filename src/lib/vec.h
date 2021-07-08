@@ -39,6 +39,16 @@ static word vec_cap(vec *self) { return self->cap; }
 
 static word vec_len(vec *self) { return self->len; }
 
+static slice vec_slice_from_range(vec *self, range rng, word size) {
+    u8 *start = self->data + rng.start * size;
+    u8 *end = self->data + rng.end * size;
+    return SLICE(start, end);
+}
+
+static slice vec_slice(vec *self, word size) {
+    return vec_slice_from_range(self, RANGE(0, self->len), size);
+}
+
 static void *vec_get(vec *self, word i, word size) {
     DEBUG_ASSERT(i < self->len);
     return self->data + i * size;

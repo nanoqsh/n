@@ -41,6 +41,35 @@ static void drop_with() {
     ASSERT(counter == n);
 }
 
+static void to_slice() {
+    u32 n = 12;
+    vec v = vec_new();
+
+    for (u32 i = 0; i < n; ++i) {
+        vec_push(&v, &i, sizeof(u32));
+    }
+
+    slice s = vec_slice(&v, sizeof(u32));
+    ASSERT(slice_len(&s, sizeof(u32)) == vec_len(&v));
+    u32 counter = 0;
+    for (u32 *p = s.start; p != s.end; ++p) {
+        ASSERT(*p == counter);
+        ++counter;
+    }
+    ASSERT(counter == n);
+
+    s = vec_slice_from_range(&v, RANGE(2, 7), sizeof(u32));
+    ASSERT(slice_len(&s, sizeof(u32)) == 5);
+    counter = 2;
+    for (u32 *p = s.start; p != s.end; ++p) {
+        ASSERT(*p == counter);
+        ++counter;
+    }
+    ASSERT(counter == 7);
+
+    vec_drop(&v);
+}
+
 static void push_top_get_pop() {
     u32 n = 12;
     vec v = vec_new();
@@ -94,6 +123,7 @@ void test_vec() {
     new_drop();
     with_cap_drop();
     drop_with();
+    to_slice();
     push_top_get_pop();
     iter();
 }
