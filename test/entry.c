@@ -1,7 +1,7 @@
 #include "test.h"
 
-#include "../def.h"
-#include "../lib/entry.h"
+#include "../src/def.h"
+#include "../src/lib/entry.h"
 
 static void new_drop() {
     u32 hash = 1;

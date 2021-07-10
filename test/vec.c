@@ -1,7 +1,7 @@
 #include "test.h"
 
-#include "../def.h"
-#include "../lib/vec.h"
+#include "../src/def.h"
+#include "../src/lib/vec.h"
 
 static void new_drop() {
     vec v = vec_new();

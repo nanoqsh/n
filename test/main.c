@@ -1,4 +1,4 @@
-#include "test/test.h"
+#include "test.h"
 
 int main() {
     TEST_RUN(entry);

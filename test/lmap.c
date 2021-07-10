@@ -1,7 +1,7 @@
 #include "test.h"
 
-#include "../def.h"
-#include "../lib/lmap.h"
+#include "../src/def.h"
+#include "../src/lib/lmap.h"
 
 static u64 hash_u32(const u32 *val) {
     u32 x = *val;
