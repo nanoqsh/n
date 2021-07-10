@@ -1,7 +1,7 @@
-#include "test.h"
+#include "../test.h"
 
-#include "../src/def.h"
-#include "../src/lib/node.h"
+#include "../../src/def.h"
+#include "../../src/lib/node.h"
 
 static void new_drop() {
     u32 val = 12;
