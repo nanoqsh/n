@@ -20,7 +20,9 @@ static slice slice_new(void *start, void *end) {
 
 static slice slice_empty() { return slice_new(NULL, NULL); }
 
-static slice slice_from_str(const char *str) { return SLICE(str, str + strlen(str)); }
+static slice slice_from_str(char *str) { return SLICE(str, str + strlen(str)); }
+
+#define SLICE_STR(s) (slice_from_str((char *)(s)))
 
 static word slice_len_bytes(slice self) { return (u8 *)self.end - (u8 *)self.start; }
 

@@ -12,6 +12,12 @@ static bool is_dec(char c) { return (c >= '0' && c <= '9') || c == '_'; }
 
 static bool is_hex(char c) { return is_dec(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
 
+static bool is_alp(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'; }
+
+static bool is_sym(char c) { return is_dec(c) || is_alp(c); }
+
+static bool is_not_quote_or_backslash(char c) { return c != '"' && c != '\\'; }
+
 typedef struct {
     u8 *ptr;
     word ln;
@@ -186,7 +192,7 @@ static tok lex_scan(lex *self) {
         lex_skip(self);
         start = lex_ptr(self);
         end = lex_expect_while(self, HOF_WITH(_exp_not_at, &nl));
-        ASSERT(lex_expect_char(self, nl));
+        lex_go(self) && lex_next(self);
         return tok_new(tag, SLICE(start, end));
     }
 
@@ -194,7 +200,7 @@ static tok lex_scan(lex *self) {
         lex_skip(self);
         start = lex_ptr(self);
         end = lex_expect_while(self, HOF_WITH(_exp_not_at, &nl));
-        ASSERT(lex_expect_char(self, nl));
+        lex_go(self) && lex_next(self);
         return tok_new(TOK_ATTR, SLICE(start, end));
     }
 
@@ -211,6 +217,9 @@ static tok lex_scan(lex *self) {
         } else if (lex_expect_char(self, 'x')) {
             p = HOF_WITH(_exp_pred, is_hex);
             tag = TOK_HEX;
+        } else if (lex_expect_char(self, '.')) {
+            end = lex_expect_while(self, p);
+            return tok_new(TOK_FLT, SLICE(start, end));
         } else {
             end = lex_expect_while(self, p);
             return tok_new(TOK_DEC, SLICE(start, end));
@@ -225,14 +234,68 @@ static tok lex_scan(lex *self) {
     }
 
     if (lex_expect_pred(self, p)) {
+        if (lex_expect_char(self, '.')) {
+            end = lex_expect_while(self, p);
+            return tok_new(TOK_FLT, SLICE(start, end));
+        }
+
         end = lex_expect_while(self, p);
         return tok_new(TOK_DEC, SLICE(start, end));
     }
 
-    const slice KW_FALSE = slice_from_str("false");
-    const slice KW_TRUE = slice_from_str("true");
-    if ((end = lex_expect_str(self, KW_FALSE)) || (end = lex_expect_str(self, KW_TRUE))) {
-        return tok_new(TOK_BOOL, SLICE(start, end));
+    char quote = '"';
+    if (lex_expect_char(self, quote)) {
+        start = lex_ptr(self);
+        while (true) {
+            end = lex_expect_while(self, HOF_WITH(_exp_pred, is_not_quote_or_backslash));
+            if (!lex_go(self)) {
+                return tok_from_tag(TOK_ERR);
+            }
+
+            if (!lex_expect_char(self, '\\')) {
+                break;
+            }
+
+            lex_next(self);
+        }
+
+        lex_go(self) && lex_next(self);
+        return tok_new(TOK_STR, SLICE(start, end));
+    }
+
+    if (lex_expect_char(self, '\'')) {
+        start = lex_ptr(self);
+        if (lex_expect_char(self, '\\')) {
+            lex_go(self) && lex_next(self);
+            if ((end = lex_expect_char(self, '\''))) {
+                return tok_new(TOK_CHR, SLICE(start, end));
+            }
+
+            return tok_from_tag(TOK_ERR);
+        } else if (lex_expect_char(self, '\'')) {
+            return tok_from_tag(TOK_ERR);
+        } else if (lex_go(self)) {
+            lex_next(self);
+            end = lex_ptr(self);
+            if (lex_expect_char(self, '\'')) {
+                return tok_new(TOK_CHR, SLICE(start, end));
+            }
+
+            return tok_from_tag(TOK_ERR);
+        }
+
+        return tok_from_tag(TOK_ERR);
+    }
+
+    if (lex_expect_pred(self, HOF_WITH(_exp_pred, is_alp))) {
+        end = lex_expect_while(self, HOF_WITH(_exp_pred, is_sym));
+        slice name = SLICE(start, end);
+
+        if (slice_cmp(name, SLICE_STR("true")) || slice_cmp(name, SLICE_STR("false"))) {
+            return tok_new(TOK_BOOL, name);
+        }
+
+        return tok_new(TOK_NAME, name);
     }
 
     return tok_from_tag(TOK_ERR);

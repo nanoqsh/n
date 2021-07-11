@@ -7,15 +7,13 @@
 static void scan() {
     const char *src = "## doca\n\
     ()#comment\n\
-    {false,true}\n\
-    ";
+    \"hello\" 'q'";
 
-    lex l = lex_new(slice_from_str(src));
+    lex l = lex_new(SLICE_STR(src));
     tok t;
     while (true) {
         t = lex_scan(&l);
         if (t.tag == TOK_END) {
-            puts("END");
             break;
         }
 
