@@ -49,8 +49,8 @@ static bool slice_cmp(slice self, slice rhs) {
 }
 
 static bool slice_starts_with(slice self, slice sub) {
-    word len = slice_len_bytes(self);
-    if (len > slice_len_bytes(sub)) {
+    word len = slice_len_bytes(sub);
+    if (len > slice_len_bytes(self)) {
         return false;
     }
 

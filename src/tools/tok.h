@@ -12,8 +12,8 @@ typedef enum {
     TOK_LSBR,
     TOK_RSBR,
     TOK_COMMA,
-    TOK_COMMENT,
     TOK_DOC,
+    TOK_COMMENT,
     TOK_ATTR,
     TOK_DEC,
     TOK_BIN,
@@ -76,13 +76,13 @@ static void tok_print(const tok *self, FILE *file) {
         fputc(',', file);
         break;
 
-    case TOK_COMMENT:
-        fprintf(file, "%s", "# ");
+    case TOK_DOC:
+        fprintf(file, "%s", "## ");
         slice_print(self->str, file);
         break;
 
-    case TOK_DOC:
-        fprintf(file, "%s", "## ");
+    case TOK_COMMENT:
+        fprintf(file, "%s", "# ");
         slice_print(self->str, file);
         break;
 

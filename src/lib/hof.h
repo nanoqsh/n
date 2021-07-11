@@ -14,7 +14,7 @@ static hof hof_from_data(hof_ptr fn, void *data) {
     };
 }
 
-#define HOF_WITH(fn, data) (hof_from_data((hof_ptr)(fn), (data)))
+#define HOF_WITH(fn, data) (hof_from_data((hof_ptr)(fn), (void *)(data)))
 
 static hof hof_new(hof_ptr fn) { return hof_from_data(fn, NULL); }
 
