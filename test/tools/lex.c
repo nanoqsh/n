@@ -2,9 +2,10 @@
 
 #include "../../src/tools/lex.h"
 #include "../../src/tools/tok.h"
+#include <stdio.h>
 
 static void scan() {
-    const char *src = "# hello\n#world\n#     !\n#";
+    const char *src = "123 12312 2323 0000 231 ";
     lex l = lex_new(slice_from_str(src));
     tok t;
     while ((t = lex_scan(&l)).tag != TOK_END) {
