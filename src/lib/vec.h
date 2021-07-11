@@ -101,7 +101,7 @@ static void *_vec_iter_next(vec_iter *self) {
 
 static void _vec_iter_drop(void *_) { (void)_; }
 
-const seq_vt VT_vec_iter_FOR_seq = {
+static const seq_vt VT_vec_iter_FOR_seq = {
     .next = (seq_next_fn)_vec_iter_next,
     .drop = _vec_iter_drop,
 };

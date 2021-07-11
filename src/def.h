@@ -18,6 +18,10 @@ static void assertion_failed(const char *a, const char *file, unsigned int line)
 
 #define ASSERT(a) ((a) ? NONE : assertion_failed(#a, (const char *)__FILE__, __LINE__))
 
+#define FAIL(a) (assertion_failed(#a, (const char *)__FILE__, __LINE__))
+
+#define UNREACHABLE FAIL("unreachable code")
+
 #ifdef DEBUG
 #define DEBUG_ASSERT(a) ASSERT(a)
 #else

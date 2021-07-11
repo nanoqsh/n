@@ -5,6 +5,7 @@ int main() {
     TEST_RUN(lmap);
     TEST_RUN(node);
     TEST_RUN(vec);
+    TEST_RUN(lex);
 
     puts("Ok");
 

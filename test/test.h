@@ -12,3 +12,4 @@ void test_entry();
 void test_lmap();
 void test_node();
 void test_vec();
+void test_lex();
