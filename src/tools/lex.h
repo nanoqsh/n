@@ -198,21 +198,41 @@ static tok lex_scan(lex *self) {
         return tok_new(TOK_ATTR, SLICE(start, end));
     }
 
+    hof p = HOF_WITH(_exp_pred, is_dec);
     start = lex_ptr(self);
     if (lex_expect_char(self, '0')) {
+        tok_tag tag;
         if (lex_expect_char(self, 'b')) {
-            hof bin = HOF_WITH(_exp_pred, is_bin);
-            if (!lex_expect_pred(self, bin)) {
-                return tok_from_tag(TOK_ERR);
-            }
-            end = lex_expect_while(self, bin);
-            return tok_new(TOK_BIN, SLICE(start, end));
+            p = HOF_WITH(_exp_pred, is_bin);
+            tag = TOK_BIN;
+        } else if (lex_expect_char(self, 'o')) {
+            p = HOF_WITH(_exp_pred, is_oct);
+            tag = TOK_OCT;
+        } else if (lex_expect_char(self, 'x')) {
+            p = HOF_WITH(_exp_pred, is_hex);
+            tag = TOK_HEX;
+        } else {
+            end = lex_expect_while(self, p);
+            return tok_new(TOK_DEC, SLICE(start, end));
         }
+
+        if (!lex_expect_pred(self, p)) {
+            return tok_from_tag(TOK_ERR);
+        }
+
+        end = lex_expect_while(self, p);
+        return tok_new(tag, SLICE(start, end));
     }
 
-    slice name = slice_from_str("name");
-    if ((end = lex_expect_str(self, name))) {
-        return tok_new(TOK_NAME, SLICE(start, end));
+    if (lex_expect_pred(self, p)) {
+        end = lex_expect_while(self, p);
+        return tok_new(TOK_DEC, SLICE(start, end));
+    }
+
+    const slice KW_FALSE = slice_from_str("false");
+    const slice KW_TRUE = slice_from_str("true");
+    if ((end = lex_expect_str(self, KW_FALSE)) || (end = lex_expect_str(self, KW_TRUE))) {
+        return tok_new(TOK_BOOL, SLICE(start, end));
     }
 
     return tok_from_tag(TOK_ERR);

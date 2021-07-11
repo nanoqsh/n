@@ -5,10 +5,9 @@
 #include <stdio.h>
 
 static void scan() {
-    const char *src = "[] ## doca\n\
-    (,)#comment\n\
-    @ attr\n\
-    {0b101_110name0b0}\n\
+    const char *src = "## doca\n\
+    ()#comment\n\
+    {false,true}\n\
     ";
 
     lex l = lex_new(slice_from_str(src));
