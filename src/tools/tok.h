@@ -78,17 +78,17 @@ static void tok_print(const tok *self, FILE *file) {
 
     case TOK_COMMENT:
         fprintf(file, "%s", "# ");
-        slice_print(&self->str, file);
+        slice_print(self->str, file);
         break;
 
     case TOK_DOC:
         fprintf(file, "%s", "## ");
-        slice_print(&self->str, file);
+        slice_print(self->str, file);
         break;
 
     case TOK_ATTR:
         fprintf(file, "%s", "@ ");
-        slice_print(&self->str, file);
+        slice_print(self->str, file);
         break;
 
     case TOK_DEC:
@@ -98,18 +98,18 @@ static void tok_print(const tok *self, FILE *file) {
     case TOK_FLT:
     case TOK_BOOL:
     case TOK_NAME:
-        slice_print(&self->str, file);
+        slice_print(self->str, file);
         break;
 
     case TOK_STR:
         fputc('"', file);
-        slice_print(&self->str, file);
+        slice_print(self->str, file);
         fputc('"', file);
         break;
 
     case TOK_CHR:
         fputc('\'', file);
-        slice_print(&self->str, file);
+        slice_print(self->str, file);
         fputc('\'', file);
         break;
 

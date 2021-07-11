@@ -5,11 +5,12 @@
 #include <stdio.h>
 
 static void scan() {
-    const char *src = "123 12312 2323 0000 231 ";
+    const char *src = "  \t\n\n   \n";
     lex l = lex_new(slice_from_str(src));
     tok t;
     while ((t = lex_scan(&l)).tag != TOK_END) {
         tok_print(&t, stdout);
+        printf(" %zu %zu", lex_ln(&l), lex_col(&l));
         puts("");
     }
     puts("END");
