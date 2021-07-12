@@ -54,9 +54,8 @@ static node node_last(node self) {
     }
 
     node curr = self;
-    for (node next; (next = *node_tail(curr)); curr = next) {
-        //
-    }
+    for (node next; (next = *node_tail(curr)); curr = next)
+        ;
     return curr;
 }
 
@@ -97,7 +96,9 @@ static node node_find_with(node self, hof pred) {
     return NULL;
 }
 
-static bool _node_cmp_val(void *data, fptr *val) { return memcmp(data, val->data, val->size) == 0; }
+static void *_node_cmp_val(void *data, fptr *val) {
+    return BOOL_AS_PTR(memcmp(data, val->data, val->size) == 0);
+}
 
 static node node_find(node self, fptr val) {
     return node_find_with(self, HOF_WITH(_node_cmp_val, &val));

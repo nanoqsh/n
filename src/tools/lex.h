@@ -145,6 +145,16 @@ static bool _exp_pred(lex *self, bool (*pred)(char)) {
     return false;
 }
 
+static tok lex_scan_number(lex *self, u8 *start) {
+    hof p = HOF_WITH(_exp_pred, is_dec);
+    u8 *end = lex_expect_while(self, p);
+    if (lex_expect_char(self, '.')) {
+        end = lex_expect_while(self, p);
+        return tok_new(TOK_FLT, SLICE(start, end));
+    }
+    return tok_new(TOK_DEC, SLICE(start, end));
+}
+
 static tok lex_scan(lex *self) {
     lex_skip(self);
     if (!lex_go(self)) {
@@ -214,12 +224,7 @@ static tok lex_scan(lex *self) {
             p = HOF_WITH(_exp_pred, is_hex);
             tag = TOK_HEX;
         } else {
-            end = lex_expect_while(self, p);
-            if (lex_expect_char(self, '.')) {
-                end = lex_expect_while(self, p);
-                return tok_new(TOK_FLT, SLICE(start, end));
-            }
-            return tok_new(TOK_DEC, SLICE(start, end));
+            return lex_scan_number(self, start);
         }
 
         if (!lex_expect_pred(self, p)) {
@@ -231,12 +236,7 @@ static tok lex_scan(lex *self) {
     }
 
     if (lex_expect_pred(self, p)) {
-        end = lex_expect_while(self, p);
-        if (lex_expect_char(self, '.')) {
-            end = lex_expect_while(self, p);
-            return tok_new(TOK_FLT, SLICE(start, end));
-        }
-        return tok_new(TOK_DEC, SLICE(start, end));
+        return lex_scan_number(self, start);
     }
 
     char quote = '"';

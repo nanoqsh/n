@@ -15,3 +15,5 @@ static range range_new(word start, word end) {
 }
 
 #define RANGE(start, end) (range_new(start, end))
+
+static word range_len(range self) { return self.end - self.start; }

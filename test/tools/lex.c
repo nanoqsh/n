@@ -6,7 +6,7 @@
 
 static void scan() {
     const char *src = "## doca\n\
-    for i in 12 { let x if true { ret 12 } else { ret w } }#comment\n\
+    for i in 0x12 { let 0b00 if true { ret 0o12 } else { ret w } }#comment\n\
     :\"hello\",'q',";
 
     lex l = lex_new(SLICE_STR(src));

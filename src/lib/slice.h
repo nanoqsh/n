@@ -1,5 +1,6 @@
 #pragma once
 
+#include "assert.h"
 #include "types.h"
 #include <stdio.h>
 #include <string.h>
@@ -57,4 +58,11 @@ static bool slice_starts_with(slice self, slice sub) {
     }
 
     return memcmp(self.start, sub.start, len) == 0;
+}
+
+static slice slice_subslice(slice self, range rng, word size) {
+    DEBUG_ASSERT(range_len(rng) + rng.start <= slice_len(self, size));
+    void *start = (u8 *)self.start + rng.start * size;
+    void *end = (u8 *)self.start + rng.end * size;
+    return SLICE(start, end);
 }
