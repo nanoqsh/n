@@ -338,5 +338,89 @@ static tok lex_scan(lex *self) {
         return tok_from_tag(TOK_COLON);
     }
 
+    if (lex_expect_char(self, '=')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_EQ);
+        }
+        return tok_from_tag(TOK_ASSIGN);
+    }
+
+    if (lex_expect_char(self, '+')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_ADD_ASSIGN);
+        }
+        return tok_from_tag(TOK_ADD);
+    }
+
+    if (lex_expect_char(self, '-')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_SUB_ASSIGN);
+        }
+        return tok_from_tag(TOK_SUB);
+    }
+
+    if (lex_expect_char(self, '*')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_MUL_ASSIGN);
+        }
+        return tok_from_tag(TOK_MUL);
+    }
+
+    if (lex_expect_char(self, '/')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_DIV_ASSIGN);
+        }
+        return tok_from_tag(TOK_DIV);
+    }
+
+    if (lex_expect_char(self, '%')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_REM_ASSIGN);
+        }
+        return tok_from_tag(TOK_REM);
+    }
+
+    if (lex_expect_char(self, '!')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_NEQ);
+        }
+        return tok_from_tag(TOK_NOT);
+    }
+
+    if (lex_expect_char(self, '<')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_LE);
+        }
+        return tok_from_tag(TOK_LT);
+    }
+
+    if (lex_expect_char(self, '>')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_GE);
+        }
+        return tok_from_tag(TOK_GT);
+    }
+
+    if (lex_expect_char(self, '&')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_AND_ASSIGN);
+        }
+        return tok_from_tag(TOK_AND);
+    }
+
+    if (lex_expect_char(self, '|')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_OR_ASSIGN);
+        }
+        return tok_from_tag(TOK_OR);
+    }
+
+    if (lex_expect_char(self, '^')) {
+        if (lex_expect_char(self, '=')) {
+            return tok_from_tag(TOK_XOR_ASSIGN);
+        }
+        return tok_from_tag(TOK_XOR);
+    }
+
     return tok_from_tag(TOK_ERR);
 }

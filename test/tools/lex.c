@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 static void scan() {
-    const char *src = "## doca\n\
-    for i in 0x12 { let 0b00 if true { ret 0o12 } else { ret w } }#comment\n\
-    :\"hello\",'q',";
+    const char *src = "let x = 0\
+    for i in 0 { 8 * x == 5 }\
+    if x <= 6 { x / 2 } else { x % 2 }";
 
     lex l = lex_new(SLICE_STR(src));
     tok t;

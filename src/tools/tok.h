@@ -31,6 +31,30 @@ typedef enum {
     TOK_IN,
     TOK_COMMA,
     TOK_COLON,
+    TOK_ASSIGN,
+    TOK_ADD,
+    TOK_SUB,
+    TOK_MUL,
+    TOK_DIV,
+    TOK_REM,
+    TOK_ADD_ASSIGN,
+    TOK_SUB_ASSIGN,
+    TOK_MUL_ASSIGN,
+    TOK_DIV_ASSIGN,
+    TOK_REM_ASSIGN,
+    TOK_EQ,
+    TOK_NEQ,
+    TOK_LT,
+    TOK_GT,
+    TOK_LE,
+    TOK_GE,
+    TOK_NOT,
+    TOK_AND,
+    TOK_OR,
+    TOK_XOR,
+    TOK_AND_ASSIGN,
+    TOK_OR_ASSIGN,
+    TOK_XOR_ASSIGN,
     TOK_END,
     TOK_ERR,
 } tok_tag;
@@ -170,6 +194,102 @@ static void tok_print(const tok *self, FILE *file) {
 
     case TOK_COLON:
         fputc(':', file);
+        break;
+
+    case TOK_ASSIGN:
+        fputc('=', file);
+        break;
+
+    case TOK_ADD:
+        fputc('+', file);
+        break;
+
+    case TOK_SUB:
+        fputc('-', file);
+        break;
+
+    case TOK_MUL:
+        fputc('*', file);
+        break;
+
+    case TOK_DIV:
+        fputc('/', file);
+        break;
+
+    case TOK_REM:
+        fputc('%', file);
+        break;
+
+    case TOK_ADD_ASSIGN:
+        fprintf(file, "%s", "+=");
+        break;
+
+    case TOK_SUB_ASSIGN:
+        fprintf(file, "%s", "-=");
+        break;
+
+    case TOK_MUL_ASSIGN:
+        fprintf(file, "%s", "*=");
+        break;
+
+    case TOK_DIV_ASSIGN:
+        fprintf(file, "%s", "/=");
+        break;
+
+    case TOK_REM_ASSIGN:
+        fprintf(file, "%s", "%=");
+        break;
+
+    case TOK_EQ:
+        fprintf(file, "%s", "==");
+        break;
+
+    case TOK_NEQ:
+        fprintf(file, "%s", "!=");
+        break;
+
+    case TOK_LT:
+        fputc('<', file);
+        break;
+
+    case TOK_GT:
+        fputc('>', file);
+        break;
+
+    case TOK_LE:
+        fprintf(file, "%s", "<=");
+        break;
+
+    case TOK_GE:
+        fprintf(file, "%s", ">=");
+        break;
+
+    case TOK_NOT:
+        fputc('!', file);
+        break;
+
+    case TOK_AND:
+        fputc('&', file);
+        break;
+
+    case TOK_OR:
+        fputc('|', file);
+        break;
+
+    case TOK_XOR:
+        fputc('^', file);
+        break;
+
+    case TOK_AND_ASSIGN:
+        fprintf(file, "%s", "&=");
+        break;
+
+    case TOK_OR_ASSIGN:
+        fprintf(file, "%s", "|=");
+        break;
+
+    case TOK_XOR_ASSIGN:
+        fprintf(file, "%s", "^=");
         break;
 
     case TOK_END:
