@@ -4,19 +4,23 @@
 #include "../lib/vec.h"
 #include "tok.h"
 
-static bool is_bin(char c) { return c == '0' || c == '1' || c == '_'; }
+static wbool is_bin(char c) { return BOOL_TO_WBOOL(c == '0' || c == '1' || c == '_'); }
 
-static bool is_oct(char c) { return (c >= '0' && c <= '7') || c == '_'; }
+static wbool is_oct(char c) { return BOOL_TO_WBOOL((c >= '0' && c <= '7') || c == '_'); }
 
-static bool is_dec(char c) { return (c >= '0' && c <= '9') || c == '_'; }
+static wbool is_dec(char c) { return BOOL_TO_WBOOL((c >= '0' && c <= '9') || c == '_'); }
 
-static bool is_hex(char c) { return is_dec(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'); }
+static wbool is_hex(char c) {
+    return BOOL_TO_WBOOL(is_dec(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'));
+}
 
-static bool is_alp(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'; }
+static wbool is_alp(char c) {
+    return BOOL_TO_WBOOL((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
+}
 
-static bool is_sym(char c) { return is_dec(c) || is_alp(c); }
+static wbool is_sym(char c) { return BOOL_TO_WBOOL(is_dec(c) || is_alp(c)); }
 
-static bool is_not_quote_or_backslash(char c) { return c != '"' && c != '\\'; }
+static wbool is_quote_or_backslash(char c) { return BOOL_TO_WBOOL(c == '"' || c == '\\'); }
 
 typedef struct {
     u8 *ptr;
@@ -127,22 +131,31 @@ static u8 *lex_expect_while(lex *self, hof exp) {
     return lex_ptr(self);
 }
 
-static bool _exp_not_at(lex *self, const char *c) {
+static wbool _exp_not_at(lex *self, const char *c) {
     if (lex_go(self) && lex_at(self) != *c) {
         lex_next(self);
-        return true;
+        return NONNULL;
     }
 
-    return false;
+    return NULL;
 }
 
-static bool _exp_pred(lex *self, bool (*pred)(char)) {
+static wbool _exp_pred(lex *self, wbool (*pred)(char)) {
     if (lex_go(self) && pred(lex_at(self))) {
         lex_next(self);
-        return true;
+        return NONNULL;
     }
 
-    return false;
+    return NULL;
+}
+
+static wbool _exp_pred_not(lex *self, wbool (*pred)(char)) {
+    if (lex_go(self) && !pred(lex_at(self))) {
+        lex_next(self);
+        return NONNULL;
+    }
+
+    return NULL;
 }
 
 static tok lex_scan_number(lex *self, u8 *start) {
@@ -156,7 +169,6 @@ static tok lex_scan_number(lex *self, u8 *start) {
 }
 
 static tok lex_scan(lex *self) {
-    lex_skip(self);
     if (!lex_go(self)) {
         return tok_from_tag(TOK_END);
     }
@@ -243,7 +255,7 @@ static tok lex_scan(lex *self) {
     if (lex_expect_char(self, quote)) {
         start = lex_ptr(self);
         while (true) {
-            end = lex_expect_while(self, HOF_WITH(_exp_pred, is_not_quote_or_backslash));
+            end = lex_expect_while(self, HOF_WITH(_exp_pred_not, is_quote_or_backslash));
             if (!lex_go(self)) {
                 return tok_from_tag(TOK_ERR);
             }

@@ -12,6 +12,9 @@ static void scan() {
     lex l = lex_new(SLICE_STR(src));
     tok t;
     while (true) {
+        lex_skip(&l);
+        word ln = lex_ln(&l);
+        word col = lex_col(&l);
         t = lex_scan(&l);
         if (t.tag == TOK_END) {
             break;
@@ -22,7 +25,7 @@ static void scan() {
             break;
         }
 
-        printf("%zu:%zu\t", lex_ln(&l), lex_col(&l));
+        printf("%zu:%zu\t", ln, col);
         tok_print(&t, stdout);
         puts("");
     }

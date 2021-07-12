@@ -2,9 +2,9 @@
 
 #include "../../src/def.h"
 
-static void *is_one(const u32 *val) { return BOOL_AS_PTR(*val == 1); }
+static wbool is_one(const u32 *val) { return BOOL_TO_WBOOL(*val == 1); }
 
-static void *is_eq(const u32 *a, const u32 *b) { return BOOL_AS_PTR(*a == *b); }
+static wbool *is_eq(const u32 *a, const u32 *b) { return BOOL_TO_WBOOL(*a == *b); }
 
 static void call() {
     hof fn = HOF(is_one);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nonnull.h"
+#include "wbool.h"
 
 typedef void *(*hof_ptr)(void *args, void *data);
 
@@ -33,6 +33,6 @@ static void *hof_call(hof self, void *args) {
     }
 }
 
-static void *_fn_not(void *args, hof *fn) { return BOOL_AS_PTR_NOT(hof_call(*fn, args)); }
+static wbool _fn_not(void *args, hof *fn) { return WBOOL_NOT(hof_call(*fn, args)); }
 
 static hof fn_not(hof *fn) { return HOF_WITH(_fn_not, fn); }

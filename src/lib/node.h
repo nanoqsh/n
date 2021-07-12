@@ -96,8 +96,8 @@ static node node_find_with(node self, hof pred) {
     return NULL;
 }
 
-static void *_node_cmp_val(void *data, fptr *val) {
-    return BOOL_AS_PTR(memcmp(data, val->data, val->size) == 0);
+static wbool _node_cmp_val(void *data, fptr *val) {
+    return BOOL_TO_WBOOL(memcmp(data, val->data, val->size) == 0);
 }
 
 static node node_find(node self, fptr val) {
