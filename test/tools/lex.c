@@ -6,8 +6,8 @@
 
 static void scan() {
     const char *src = "## doca\n\
-    ()#comment\n\
-    \"hello\" 'q'";
+    for i in 12 { let x if true { ret 12 } else { ret w } }#comment\n\
+    :\"hello\",'q',";
 
     lex l = lex_new(SLICE_STR(src));
     tok t;

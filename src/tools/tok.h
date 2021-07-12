@@ -11,7 +11,6 @@ typedef enum {
     TOK_RBRC,
     TOK_LSBR,
     TOK_RSBR,
-    TOK_COMMA,
     TOK_DOC,
     TOK_COMMENT,
     TOK_ATTR,
@@ -24,6 +23,14 @@ typedef enum {
     TOK_CHR,
     TOK_BOOL,
     TOK_NAME,
+    TOK_LET,
+    TOK_RET,
+    TOK_IF,
+    TOK_ELSE,
+    TOK_FOR,
+    TOK_IN,
+    TOK_COMMA,
+    TOK_COLON,
     TOK_END,
     TOK_ERR,
 } tok_tag;
@@ -72,10 +79,6 @@ static void tok_print(const tok *self, FILE *file) {
         fputc(']', file);
         break;
 
-    case TOK_COMMA:
-        fputc(',', file);
-        break;
-
     case TOK_DOC:
         fprintf(file, "%s", "## ");
         slice_print(self->str, file);
@@ -92,12 +95,31 @@ static void tok_print(const tok *self, FILE *file) {
         break;
 
     case TOK_DEC:
+        fprintf(file, "%s", "DEC=");
+        slice_print(self->str, file);
+        break;
+
     case TOK_BIN:
+        fprintf(file, "%s", "BIN=");
+        slice_print(self->str, file);
+        break;
+
     case TOK_OCT:
+        fprintf(file, "%s", "OCT=");
+        slice_print(self->str, file);
+        break;
+
     case TOK_HEX:
+        fprintf(file, "%s", "HEX=");
+        slice_print(self->str, file);
+        break;
+
     case TOK_FLT:
+        fprintf(file, "%s", "FLT=");
+        slice_print(self->str, file);
+        break;
+
     case TOK_BOOL:
-    case TOK_NAME:
         slice_print(self->str, file);
         break;
 
@@ -111,6 +133,43 @@ static void tok_print(const tok *self, FILE *file) {
         fputc('\'', file);
         slice_print(self->str, file);
         fputc('\'', file);
+        break;
+
+    case TOK_NAME:
+        fprintf(file, "%s", "NAME=");
+        slice_print(self->str, file);
+        break;
+
+    case TOK_LET:
+        fprintf(file, "%s", "let");
+        break;
+
+    case TOK_RET:
+        fprintf(file, "%s", "ret");
+        break;
+
+    case TOK_IF:
+        fprintf(file, "%s", "if");
+        break;
+
+    case TOK_ELSE:
+        fprintf(file, "%s", "else");
+        break;
+
+    case TOK_FOR:
+        fprintf(file, "%s", "for");
+        break;
+
+    case TOK_IN:
+        fprintf(file, "%s", "in");
+        break;
+
+    case TOK_COMMA:
+        fputc(',', file);
+        break;
+
+    case TOK_COLON:
+        fputc(':', file);
         break;
 
     case TOK_END:

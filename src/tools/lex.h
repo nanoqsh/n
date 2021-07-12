@@ -180,10 +180,6 @@ static tok lex_scan(lex *self) {
         return tok_from_tag(TOK_RSBR);
     }
 
-    if (lex_expect_char(self, ',')) {
-        return tok_from_tag(TOK_COMMA);
-    }
-
     u8 *start;
     u8 *end;
 
@@ -217,11 +213,12 @@ static tok lex_scan(lex *self) {
         } else if (lex_expect_char(self, 'x')) {
             p = HOF_WITH(_exp_pred, is_hex);
             tag = TOK_HEX;
-        } else if (lex_expect_char(self, '.')) {
-            end = lex_expect_while(self, p);
-            return tok_new(TOK_FLT, SLICE(start, end));
         } else {
             end = lex_expect_while(self, p);
+            if (lex_expect_char(self, '.')) {
+                end = lex_expect_while(self, p);
+                return tok_new(TOK_FLT, SLICE(start, end));
+            }
             return tok_new(TOK_DEC, SLICE(start, end));
         }
 
@@ -234,12 +231,11 @@ static tok lex_scan(lex *self) {
     }
 
     if (lex_expect_pred(self, p)) {
+        end = lex_expect_while(self, p);
         if (lex_expect_char(self, '.')) {
             end = lex_expect_while(self, p);
             return tok_new(TOK_FLT, SLICE(start, end));
         }
-
-        end = lex_expect_while(self, p);
         return tok_new(TOK_DEC, SLICE(start, end));
     }
 
@@ -295,7 +291,39 @@ static tok lex_scan(lex *self) {
             return tok_new(TOK_BOOL, name);
         }
 
+        if (slice_cmp(name, SLICE_STR("let"))) {
+            return tok_new(TOK_LET, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("ret"))) {
+            return tok_new(TOK_RET, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("if"))) {
+            return tok_new(TOK_IF, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("else"))) {
+            return tok_new(TOK_ELSE, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("for"))) {
+            return tok_new(TOK_FOR, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("in"))) {
+            return tok_new(TOK_IN, name);
+        }
+
         return tok_new(TOK_NAME, name);
+    }
+
+    if (lex_expect_char(self, ',')) {
+        return tok_from_tag(TOK_COMMA);
+    }
+
+    if (lex_expect_char(self, ':')) {
+        return tok_from_tag(TOK_COLON);
     }
 
     return tok_from_tag(TOK_ERR);
