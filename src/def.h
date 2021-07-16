@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lib/assert.h"
+#include "lib/box.h"
 #include "lib/fptr.h"
 #include "lib/hof.h"
 #include "lib/range.h"

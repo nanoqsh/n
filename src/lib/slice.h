@@ -1,13 +1,15 @@
 #pragma once
 
 #include "assert.h"
+#include "hof.h"
+#include "range.h"
 #include "types.h"
 #include <stdio.h>
 #include <string.h>
 
 typedef struct {
-    void *start;
-    void *end;
+    u8 *start;
+    u8 *end;
 } slice;
 
 static slice slice_new(void *start, void *end) {
@@ -25,7 +27,7 @@ static slice slice_from_str(char *str) { return SLICE(str, str + strlen(str)); }
 
 #define SLICE_STR(s) (slice_from_str((char *)(s)))
 
-static word slice_len_bytes(slice self) { return (u8 *)self.end - (u8 *)self.start; }
+static word slice_len_bytes(slice self) { return self.end - self.start; }
 
 static word slice_len(slice self, word size) { return slice_len_bytes(self) / size; }
 
@@ -62,7 +64,7 @@ static bool slice_starts_with(slice self, slice sub) {
 
 static slice slice_subslice(slice self, range rng, word size) {
     DEBUG_ASSERT(range_len(rng) + rng.start <= slice_len(self, size));
-    void *start = (u8 *)self.start + rng.start * size;
-    void *end = (u8 *)self.start + rng.end * size;
+    void *start = self.start + rng.start * size;
+    void *end = self.start + rng.end * size;
     return SLICE(start, end);
 }

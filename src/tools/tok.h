@@ -73,6 +73,67 @@ static tok tok_new(tok_tag tag, slice str) {
 
 static tok tok_from_tag(tok_tag tag) { return tok_new(tag, slice_empty()); }
 
+static bool _tok_str_to_num(slice str, u8 base, u64 *out) {
+    u64 base_pow = 1;
+    u8 *p = str.end;
+    while (p != str.start) {
+        u8 c = *--p;
+        u8 d;
+        if (c >= '0' && c <= '9') {
+            d = c - '0';
+        } else if (c >= 'A' && c <= 'F') {
+            d = c - 'A' + 10;
+        } else {
+            UNREACHABLE;
+        }
+
+        u64 n = d * base_pow;
+        if (n / base_pow != d) {
+            return false;
+        }
+
+        *out += n;
+        if (*out < n) {
+            return false;
+        }
+
+        u64 pow = base_pow * base;
+        if (pow / base != base_pow) {
+            return p == str.start;
+        }
+        base_pow = pow;
+    }
+
+    return true;
+}
+
+static bool tok_to_num(const tok *self, u64 *out) {
+    u8 base;
+    switch (self->tag) {
+    case TOK_DEC:
+        return _tok_str_to_num(self->str, 10, out);
+
+    case TOK_BIN:
+        base = 2;
+        break;
+
+    case TOK_OCT:
+        base = 8;
+        break;
+
+    case TOK_HEX:
+        base = 16;
+        break;
+
+    default:
+        return false;
+    }
+
+    word len = slice_len_bytes(self->str);
+    slice str = slice_subslice(self->str, RANGE(2, len), sizeof(u8));
+    return _tok_str_to_num(str, base, out);
+}
+
 static void tok_print(const tok *self, FILE *file) {
     switch (self->tag) {
     case TOK_NL:
