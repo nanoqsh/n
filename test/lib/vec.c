@@ -52,7 +52,7 @@ static void to_slice() {
     slice s = vec_slice(&v, sizeof(u32));
     ASSERT(slice_len(s, sizeof(u32)) == vec_len(&v));
     u32 counter = 0;
-    for (u32 *p = (u32 *)s.start; p != (u32 *)s.end; ++p) {
+    for (u32 *p = slice_start(s); p != slice_end(s); ++p) {
         ASSERT(*p == counter);
         ++counter;
     }
@@ -61,7 +61,7 @@ static void to_slice() {
     s = vec_slice_from_range(&v, RANGE(2, 7), sizeof(u32));
     ASSERT(slice_len(s, sizeof(u32)) == 5);
     counter = 2;
-    for (u32 *p = (u32 *)s.start; p != (u32 *)s.end; ++p) {
+    for (u32 *p = slice_start(s); p != slice_end(s); ++p) {
         ASSERT(*p == counter);
         ++counter;
     }

@@ -27,6 +27,12 @@ static slice slice_from_str(char *str) { return SLICE(str, str + strlen(str)); }
 
 #define SLICE_STR(s) (slice_from_str((char *)(s)))
 
+#define SLICE_FROM_ARRAY(a) (SLICE(a, (a) + sizeof(a) / sizeof(*(a))))
+
+static void *slice_start(slice self) { return self.start; }
+
+static void *slice_end(slice self) { return self.end; }
+
 static word slice_len_bytes(slice self) { return self.end - self.start; }
 
 static word slice_len(slice self, word size) { return slice_len_bytes(self) / size; }

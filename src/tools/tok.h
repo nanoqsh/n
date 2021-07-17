@@ -75,8 +75,8 @@ static tok tok_from_tag(tok_tag tag) { return tok_new(tag, slice_empty()); }
 
 static bool _tok_str_to_num(slice str, u8 base, u64 *out) {
     u64 base_pow = 1;
-    u8 *p = str.end;
-    while (p != str.start) {
+    u8 *p = slice_end(str);
+    while (p != slice_start(str)) {
         u8 c = *--p;
         u8 d;
         if (c >= '0' && c <= '9') {

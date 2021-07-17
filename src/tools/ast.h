@@ -4,19 +4,43 @@
 #include "../tools/tok.h"
 
 typedef enum {
+    // expr
+    // leaf
     AST_NUM,
     AST_FLT,
     AST_STR,
     AST_CHR,
     AST_BOOL,
     AST_NAME,
+    // end leaf
+    AST_NEG,
+    AST_NOT,
+    // binary
     AST_ADD,
     AST_SUB,
     AST_MUL,
     AST_DIV,
     AST_REM,
+    AST_EQ,
+    AST_NEQ,
+    AST_LT,
+    AST_GT,
+    AST_LE,
+    AST_GE,
+    AST_AND,
+    AST_OR,
+    AST_XOR,
+    // end binary
+    AST_BLOCK,
+    // end expr
     AST_ERR,
 } ast_tag;
+
+bool ast_tag_is_leaf(ast_tag self) { return self >= AST_NUM && self <= AST_NAME; }
+
+bool ast_tag_is_expr(ast_tag self) { return self >= AST_NUM && self <= AST_BLOCK; }
+
+bool ast_tag_is_binary(ast_tag self) { return self >= AST_ADD && self <= AST_XOR; }
 
 typedef struct {
     ast_tag tag;
@@ -79,16 +103,34 @@ static ast ast_from_tok(const tok *t) {
     return self;
 }
 
-static ast ast_from_pair(ast_tag tag, ast left, ast right) {
-    DEBUG_ASSERT(
-        tag == AST_ADD || tag == AST_SUB || tag == AST_MUL || tag == AST_DIV || tag == AST_REM);
-
-    ast pair[] = {left, right};
-    box x = BOX_FROM_ARRAY(pair);
+static ast ast_single(ast_tag tag, ast node) {
+    DEBUG_ASSERT(!ast_tag_is_binary(tag));
+    DEBUG_ASSERT(ast_tag_is_expr(node.tag));
 
     return (ast){
         .tag = tag,
-        .data.x = x,
+        .data.x = BOX(&node),
+    };
+}
+
+static ast ast_binary(ast_tag tag, ast left, ast right) {
+    DEBUG_ASSERT(ast_tag_is_binary(tag));
+    DEBUG_ASSERT(ast_tag_is_expr(left.tag));
+    DEBUG_ASSERT(ast_tag_is_expr(right.tag));
+
+    ast pair[] = {left, right};
+    return (ast){
+        .tag = tag,
+        .data.x = BOX_FROM_ARRAY(pair),
+    };
+}
+
+static ast ast_list(ast_tag tag, slice list) {
+    DEBUG_ASSERT(tag == AST_BLOCK);
+
+    return (ast){
+        .tag = tag,
+        .data.x = box_from_slice(list),
     };
 }
 
@@ -100,15 +142,44 @@ static void ast_drop(const ast *self) {
         box_drop(self->data.x);
         break;
 
+    case AST_NEG:
+    case AST_NOT: {
+        box x = self->data.x;
+        ast *node = box_data(x);
+        ast_drop(node);
+        box_drop(x);
+        break;
+    }
+
     case AST_ADD:
     case AST_SUB:
     case AST_MUL:
     case AST_DIV:
-    case AST_REM: {
+    case AST_REM:
+    case AST_EQ:
+    case AST_NEQ:
+    case AST_LT:
+    case AST_GT:
+    case AST_LE:
+    case AST_GE:
+    case AST_AND:
+    case AST_OR:
+    case AST_XOR: {
         box x = self->data.x;
         ast *pair = box_data(x);
         ast_drop(pair);
         ast_drop(pair + 1);
+        box_drop(x);
+        break;
+    }
+
+    case AST_BLOCK: {
+        box x = self->data.x;
+        slice list = box_to_slice(x);
+        for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
+            ast_drop(item);
+        }
+
         box_drop(x);
         break;
     }
@@ -163,26 +234,86 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
         fprintf(info->file, "%s", self->data.b1 ? "true" : "false");
         break;
 
+    case AST_NEG:
+        op = "-";
+        goto PRINT_UN;
+
+    case AST_NOT:
+        op = "!";
+        goto PRINT_UN;
+
+    PRINT_UN : {
+        box x = self->data.x;
+        ast *node = box_data(x);
+        if (info->pretty) {
+            fprintf(info->file, "%s", op);
+            ++info->level;
+            _ast_print(node, info);
+            --info->level;
+        } else {
+            fprintf(info->file, "%s", op);
+            _ast_print(node, info);
+        }
+        break;
+    }
+
     case AST_ADD:
         op = "+";
-        goto PRINT_OP;
+        goto PRINT_BIN;
 
     case AST_SUB:
         op = "-";
-        goto PRINT_OP;
+        goto PRINT_BIN;
 
     case AST_MUL:
         op = "*";
-        goto PRINT_OP;
+        goto PRINT_BIN;
 
     case AST_DIV:
         op = "/";
-        goto PRINT_OP;
+        goto PRINT_BIN;
 
     case AST_REM:
         op = "%";
+        goto PRINT_BIN;
 
-    PRINT_OP : {
+    case AST_EQ:
+        op = "==";
+        goto PRINT_BIN;
+
+    case AST_NEQ:
+        op = "!=";
+        goto PRINT_BIN;
+
+    case AST_LT:
+        op = "<";
+        goto PRINT_BIN;
+
+    case AST_GT:
+        op = ">";
+        goto PRINT_BIN;
+
+    case AST_LE:
+        op = "<=";
+        goto PRINT_BIN;
+
+    case AST_GE:
+        op = ">=";
+        goto PRINT_BIN;
+
+    case AST_AND:
+        op = "&";
+        goto PRINT_BIN;
+
+    case AST_OR:
+        op = "|";
+        goto PRINT_BIN;
+
+    case AST_XOR:
+        op = "^";
+        goto PRINT_BIN;
+
+    PRINT_BIN : {
         box x = self->data.x;
         ast *pair = box_data(x);
         if (info->pretty) {
@@ -197,6 +328,28 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
             fprintf(info->file, " %s ", op);
             _ast_print(pair + 1, info);
             fprintf(info->file, "%s", COL_CYAN " ]" COL_DEF);
+        }
+        break;
+    }
+
+    case AST_BLOCK: {
+        box x = self->data.x;
+        slice list = box_to_slice(x);
+        if (info->pretty) {
+            fprintf(info->file, "%s", "{ " COL_CYAN ".." COL_DEF " }");
+            ++info->level;
+            for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
+                _ast_print(item, info);
+            }
+            --info->level;
+        } else {
+            fprintf(info->file, "%s", "{\n");
+            for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
+                fprintf(info->file, "%s", "    ");
+                _ast_print(item, info);
+                fputc('\n', info->file);
+            }
+            fprintf(info->file, "%s", "}");
         }
         break;
     }
