@@ -25,6 +25,10 @@ static box box_from_slice(slice s) {
     };
 }
 
+#define BOX_FROM_ARRAY(a) (box_from_slice(SLICE(a, (a) + sizeof(a) / sizeof(*a))))
+
+#define BOX(p) (box_from_slice(SLICE(p, (p) + 1)))
+
 static box box_empty() { return box_from_slice(slice_empty()); }
 
 static void box_drop(box self) { free(self.data); }
