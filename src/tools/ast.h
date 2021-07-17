@@ -118,18 +118,38 @@ static void ast_drop(const ast *self) {
     }
 }
 
-static void ast_print(const ast *self, FILE *file) {
+typedef struct {
+    FILE *file;
+    bool pretty;
+    bool first;
+    word level;
+} _ast_print_info;
+
+static void _ast_print(const ast *self, _ast_print_info *info) {
+    if (info->pretty) {
+        if (info->first) {
+            info->first = false;
+        } else {
+            fputc('\n', info->file);
+        }
+
+        for (word i = 0; i < info->level; ++i) {
+            fprintf(info->file, "%s", "  ");
+        }
+        fprintf(info->file, "%s", COL_CYAN "- " COL_DEF);
+    }
+
     const char *op;
     switch (self->tag) {
     case AST_NUM:
-        fprintf(file, "%lu", self->data.b8);
+        fprintf(info->file, "%lu", self->data.b8);
         break;
 
     case AST_FLT:
     case AST_STR:
     case AST_NAME: {
         slice str = box_to_slice(self->data.x);
-        slice_print(str, file);
+        slice_print(str, info->file);
         break;
     }
 
@@ -140,7 +160,7 @@ static void ast_print(const ast *self, FILE *file) {
     }
 
     case AST_BOOL:
-        fprintf(file, "%s", self->data.b1 ? "true" : "false");
+        fprintf(info->file, "%s", self->data.b1 ? "true" : "false");
         break;
 
     case AST_ADD:
@@ -165,17 +185,37 @@ static void ast_print(const ast *self, FILE *file) {
     PRINT_OP : {
         box x = self->data.x;
         ast *pair = box_data(x);
-        ast_print(pair, file);
-        fprintf(file, " %s ", op);
-        ast_print(pair + 1, file);
+        if (info->pretty) {
+            fprintf(info->file, "%s", op);
+            ++info->level;
+            _ast_print(pair, info);
+            _ast_print(pair + 1, info);
+            --info->level;
+        } else {
+            fprintf(info->file, "%s", COL_CYAN "[ " COL_DEF);
+            _ast_print(pair, info);
+            fprintf(info->file, " %s ", op);
+            _ast_print(pair + 1, info);
+            fprintf(info->file, "%s", COL_CYAN " ]" COL_DEF);
+        }
         break;
     }
 
     case AST_ERR:
-        fprintf(file, "%s", "ERR");
+        fprintf(info->file, "%s", "ERR");
         break;
 
     default:
         UNREACHABLE;
     }
+}
+
+static void ast_print(const ast *self, FILE *file, bool pretty) {
+    _ast_print_info info = {
+        .file = file,
+        .pretty = pretty,
+        .first = true,
+        .level = 0,
+    };
+    _ast_print(self, &info);
 }

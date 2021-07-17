@@ -1,10 +1,11 @@
 #pragma once
 
+#include "../src/lib/col.h"
 #include <stdio.h>
 
 #define TEST_RUN(t)                                                                                \
     {                                                                                              \
-        puts("Run " #t " test..");                                                                 \
+        puts(COL_CYAN "Run " #t " test.." COL_DEF);                                                \
         test_##t();                                                                                \
     }
 
