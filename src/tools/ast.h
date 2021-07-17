@@ -31,6 +31,7 @@ typedef enum {
     AST_OR,
     AST_XOR,
     // end binary
+    AST_TUPLE,
     AST_BLOCK,
     // end expr
     AST_ERR,
@@ -126,7 +127,7 @@ static ast ast_binary(ast_tag tag, ast left, ast right) {
 }
 
 static ast ast_list(ast_tag tag, slice list) {
-    DEBUG_ASSERT(tag == AST_BLOCK);
+    DEBUG_ASSERT(tag == AST_BLOCK || tag == AST_TUPLE);
 
     return (ast){
         .tag = tag,
@@ -173,6 +174,7 @@ static void ast_drop(const ast *self) {
         break;
     }
 
+    case AST_TUPLE:
     case AST_BLOCK: {
         box x = self->data.x;
         slice list = box_to_slice(x);
@@ -196,6 +198,15 @@ typedef struct {
     word level;
 } _ast_print_info;
 
+#define INDENT                                                                                     \
+    for (word i = 0; i < info->level; ++i) {                                                       \
+        fprintf(info->file, "%s", "  ");                                                           \
+    }
+
+#define INDENT2                                                                                    \
+    INDENT;                                                                                        \
+    INDENT;
+
 static void _ast_print(const ast *self, _ast_print_info *info) {
     if (info->pretty) {
         if (info->first) {
@@ -204,9 +215,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
             fputc('\n', info->file);
         }
 
-        for (word i = 0; i < info->level; ++i) {
-            fprintf(info->file, "%s", "  ");
-        }
+        INDENT;
         fprintf(info->file, "%s", COL_CYAN "- " COL_DEF);
     }
 
@@ -332,6 +341,32 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
         break;
     }
 
+    case AST_TUPLE: {
+        box x = self->data.x;
+        slice list = box_to_slice(x);
+        if (info->pretty) {
+            fprintf(info->file, "%s", "[ " COL_CYAN ".." COL_DEF " ]");
+            ++info->level;
+            for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
+                _ast_print(item, info);
+            }
+            --info->level;
+        } else {
+            fprintf(info->file, "%s", "[ ");
+            ++info->level;
+            for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
+                if (item != slice_start(list)) {
+                    fprintf(info->file, "%s", ", ");
+                }
+
+                _ast_print(item, info);
+            }
+            --info->level;
+            fprintf(info->file, "%s", " ]");
+        }
+        break;
+    }
+
     case AST_BLOCK: {
         box x = self->data.x;
         slice list = box_to_slice(x);
@@ -344,11 +379,14 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
             --info->level;
         } else {
             fprintf(info->file, "%s", "{\n");
+            ++info->level;
             for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
-                fprintf(info->file, "%s", "    ");
+                INDENT2;
                 _ast_print(item, info);
                 fputc('\n', info->file);
             }
+            --info->level;
+            INDENT2;
             fprintf(info->file, "%s", "}");
         }
         break;
@@ -372,3 +410,6 @@ static void ast_print(const ast *self, FILE *file, bool pretty) {
     };
     _ast_print(self, &info);
 }
+
+#undef INDENT
+#undef INDENT2

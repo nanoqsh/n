@@ -7,8 +7,8 @@ static void new_drop() {
     {
         tok lt = tok_new(TOK_NAME, SLICE_STR("x"));
         tok rt = tok_new(TOK_DEC, SLICE_STR("10"));
-        ast l = ast_from_tok(&lt);
-        ast r = ast_single(AST_NEG, ast_single(AST_NEG, ast_from_tok(&rt)));
+        ast l = ast_single(AST_NEG, ast_from_tok(&lt));
+        ast r = ast_from_tok(&rt);
         a = ast_binary(AST_AND, l, r);
     }
 
@@ -30,7 +30,20 @@ static void new_drop() {
         d = ast_binary(AST_XOR, l, r);
     }
 
-    ast b[] = {a, m, d};
+    ast i;
+    {
+        tok lt = tok_new(TOK_FLT, SLICE_STR("0.5"));
+        tok rt = tok_new(TOK_DEC, SLICE_STR("7"));
+        ast l = ast_from_tok(&lt);
+        ast r = ast_from_tok(&rt);
+        ast s = ast_binary(AST_ADD, l, r);
+        l = ast_from_tok(&lt);
+        r = ast_from_tok(&rt);
+        ast b[] = {s, l, r};
+        i = ast_list(AST_TUPLE, SLICE_FROM_ARRAY(b));
+    }
+
+    ast b[] = {a, m, i, d};
     ast e = ast_list(AST_BLOCK, SLICE_FROM_ARRAY(b));
     ast_print(&e, stdout, false);
     puts("");
