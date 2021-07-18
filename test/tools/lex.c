@@ -6,8 +6,8 @@
 
 static void scan() {
     const char *src = "let x = 0\
-    for i in 0 { 8 * x == 5 }\
-    if x <= 6 { x / 2 } else { x % 2 }";
+    for i in 0 { 8. * x == 5 }\
+    if x <= 6 { tru } el { fal }";
 
     lex l = lex_new(SLICE_STR(src));
     tok t;

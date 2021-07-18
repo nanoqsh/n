@@ -23,7 +23,7 @@ static void new_drop() {
 
     ast d;
     {
-        tok lt = tok_new(TOK_BOOL, SLICE_STR("true"));
+        tok lt = tok_from_tag(TOK_TRU);
         tok rt = tok_new(TOK_DEC, SLICE_STR("7"));
         ast l = ast_single(AST_NOT, ast_from_tok(&lt));
         ast r = ast_from_tok(&rt);

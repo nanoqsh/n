@@ -21,7 +21,8 @@ typedef enum {
     TOK_FLT,
     TOK_STR,
     TOK_CHR,
-    TOK_BOOL,
+    TOK_TRU,
+    TOK_FAL,
     TOK_NAME,
     TOK_LET,
     TOK_RET,
@@ -204,8 +205,12 @@ static void tok_print(const tok *self, FILE *file) {
         slice_print(self->str, file);
         break;
 
-    case TOK_BOOL:
-        slice_print(self->str, file);
+    case TOK_TRU:
+        fprintf(file, "%s", "tru");
+        break;
+
+    case TOK_FAL:
+        fprintf(file, "%s", "fal");
         break;
 
     case TOK_STR:
@@ -238,7 +243,7 @@ static void tok_print(const tok *self, FILE *file) {
         break;
 
     case TOK_ELSE:
-        fprintf(file, "%s", "else");
+        fprintf(file, "%s", "el");
         break;
 
     case TOK_FOR:

@@ -299,8 +299,12 @@ static tok lex_scan(lex *self) {
         end = lex_expect_while(self, HOF_WITH(_exp_pred, is_sym));
         slice name = SLICE(start, end);
 
-        if (slice_cmp(name, SLICE_STR("true")) || slice_cmp(name, SLICE_STR("false"))) {
-            return tok_new(TOK_BOOL, name);
+        if (slice_cmp(name, SLICE_STR("tru"))) {
+            return tok_from_tag(TOK_TRU);
+        }
+
+        if (slice_cmp(name, SLICE_STR("fal"))) {
+            return tok_from_tag(TOK_FAL);
         }
 
         if (slice_cmp(name, SLICE_STR("let"))) {
@@ -315,7 +319,7 @@ static tok lex_scan(lex *self) {
             return tok_new(TOK_IF, name);
         }
 
-        if (slice_cmp(name, SLICE_STR("else"))) {
+        if (slice_cmp(name, SLICE_STR("el"))) {
             return tok_new(TOK_ELSE, name);
         }
 

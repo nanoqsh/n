@@ -87,9 +87,14 @@ static ast ast_from_tok(const tok *t) {
         self.data.b4 = c;
         break;
 
-    case TOK_BOOL:
+    case TOK_TRU:
         self.tag = AST_BOOL;
-        self.data.b1 = *t->str.start == 't';
+        self.data.b1 = true;
+        break;
+
+    case TOK_FAL:
+        self.tag = AST_BOOL;
+        self.data.b1 = false;
         break;
 
     case TOK_NAME:
@@ -240,7 +245,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
     }
 
     case AST_BOOL:
-        fprintf(info->file, "%s", self->data.b1 ? "true" : "false");
+        fprintf(info->file, "%s", self->data.b1 ? "tru" : "fal");
         break;
 
     case AST_NEG:
