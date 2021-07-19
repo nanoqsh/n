@@ -108,10 +108,10 @@ static void ast_drop(const ast *self) {
         break;
     }
 
-    case AST_PAT: {
+    case AST_DECL_PAT: {
         x = self->data.x;
-        an_pat *a = box_data(x);
-        an_pat_drop(a);
+        an_decl_pat *a = box_data(x);
+        an_decl_pat_drop(a);
         break;
     }
 
@@ -187,9 +187,9 @@ static void _ast_print_tuple_pat(const an_tuple_pat *a, _ast_print_info *info) {
     }
 }
 
-static void _ast_print_pat(const an_pat *a, _ast_print_info *info) {
+static void _ast_print_decl_pat(const an_decl_pat *a, _ast_print_info *info) {
     switch (a->tag) {
-    case AN_PAT_TUPLE: {
+    case AN_DECL_PAT_TUPLE: {
         box name = a->data.tuple.name;
         if (box_data(name)) {
             slice s = box_to_slice(name);
@@ -201,7 +201,7 @@ static void _ast_print_pat(const an_pat *a, _ast_print_info *info) {
         break;
     }
 
-    case AN_PAT_NAME: {
+    case AN_DECL_PAT_NAME: {
         if (a->data.name.tilda) {
             fputc('~', info->file);
         }
@@ -214,7 +214,7 @@ static void _ast_print_pat(const an_pat *a, _ast_print_info *info) {
         break;
     }
 
-    case AN_PAT_UNDER:
+    case AN_DECL_PAT_UNDER:
         fputc('_', info->file);
         break;
 
@@ -378,9 +378,9 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
         break;
     }
 
-    case AST_PAT: {
-        const an_pat *a = box_data(self->data.x);
-        _ast_print_pat(a, info);
+    case AST_DECL_PAT: {
+        const an_decl_pat *a = box_data(self->data.x);
+        _ast_print_decl_pat(a, info);
         break;
     }
 
@@ -400,7 +400,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
             fprintf(info->file, "%s", COL_CYAN "- " COL_DEF);
         }
         an_decl *a = box_data(self->data.x);
-        _ast_print_pat(&a->pat, info);
+        _ast_print_decl_pat(&a->pat, info);
 
         ast typ = a->typ;
         if (typ.tag != AST_NONE) {

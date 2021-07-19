@@ -34,7 +34,7 @@ typedef enum {
     AST_TUPLE,
     AST_BLOCK,
     // end expr
-    AST_PAT,
+    AST_DECL_PAT,
     AST_TUPLE_PAT,
     AST_DECL,
 } ast_tag;

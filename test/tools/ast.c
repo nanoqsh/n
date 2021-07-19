@@ -12,7 +12,7 @@ static void new_drop() {
         ast and = ast_binary(AST_AND, l, r);
 
         box name = box_from_slice(SLICE_STR("val"));
-        an_pat pat = an_pat_new_name(false, name);
+        an_decl_pat pat = an_decl_pat_new_name(false, name);
 
         an_decl decl = an_decl_new(pat, ast_none(), and);
         a = ast_from_box(AST_DECL, BOX(&decl));
@@ -30,9 +30,11 @@ static void new_drop() {
         ast t = ast_from_box(AST_TUPLE_PAT, BOX(&tup));
         tok c_name = tok_new(TOK_NAME, SLICE_STR("c"));
         ast c = ast_from_tok(&c_name);
-        ast pats2[] = {t, c};
+        an_decl_pat under = an_decl_pat_new_under();
+        ast u = ast_from_box(AST_DECL_PAT, BOX(&under));
+        ast pats2[] = {t, c, u};
         an_tuple_pat tup2 = an_tuple_pat_new(true, BOX_FROM_ARRAY(pats2));
-        an_pat pat = an_pat_new_tuple(name, tup2);
+        an_decl_pat pat = an_decl_pat_new_tuple(name, tup2);
 
         tok tt = tok_new(TOK_NAME, SLICE_STR("Data"));
         ast typ = ast_from_tok(&tt);

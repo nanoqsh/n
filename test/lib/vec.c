@@ -95,35 +95,10 @@ static void push_top_get_pop() {
     vec_drop(&v);
 }
 
-static void for_each_iter(vptr seq) {
-    u32 counter = 0;
-    u32 *p;
-    while ((p = seq_next(seq))) {
-        ASSERT(*p == counter);
-        ++counter;
-    }
-    seq_drop(seq);
-}
-
-static void iter() {
-    u32 n = 12;
-    vec v = vec_new();
-
-    for (u32 i = 0; i < n; ++i) {
-        vec_push(&v, &i, sizeof(u32));
-    }
-
-    vec_iter iter = vec_to_iter(&v, sizeof(u32));
-    for_each_iter(DYN(seq, vec_iter, &iter));
-
-    vec_drop(&v);
-}
-
 void test_vec() {
     new_drop();
     with_cap_drop();
     drop_with();
     to_slice();
     push_top_get_pop();
-    iter();
 }

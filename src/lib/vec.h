@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../def.h"
-#include "seq.h"
 
 typedef struct {
     u8 *data;
@@ -81,35 +80,4 @@ static void *vec_pop(vec *self, word size) {
     void *item = vec_get(self, len, size);
     self->len = len;
     return item;
-}
-
-typedef struct {
-    vec *vec;
-    word ptr;
-    const word size;
-} vec_iter;
-
-static void *_vec_iter_next(vec_iter *self) {
-    if (self->ptr == self->vec->len) {
-        return NULL;
-    }
-
-    word ptr = self->ptr;
-    ++self->ptr;
-    return vec_get(self->vec, ptr, self->size);
-}
-
-static void _vec_iter_drop(void *_) { (void)_; }
-
-static const seq_vt VT_vec_iter_FOR_seq = {
-    .next = (seq_next_fn)_vec_iter_next,
-    .drop = _vec_iter_drop,
-};
-
-static vec_iter vec_to_iter(vec *self, word size) {
-    return (vec_iter){
-        .vec = self,
-        .ptr = 0,
-        .size = size,
-    };
 }
