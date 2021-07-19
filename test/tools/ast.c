@@ -32,12 +32,13 @@ static void new_drop() {
         ast pats[] = {a, b};
         an_tuple_pat tup = an_tuple_pat_new(true, BOX_FROM_ARRAY(pats));
         ast t = ast_from_box(AST_TUPLE_PAT, BOX(&tup));
-        an_pat pat = an_pat_new_tuple(BOX(&n), BOX(&t));
-        p = ast_from_box(AST_PAT, BOX(&pat));
+        an_pat pat = an_pat_new_tuple(n, t);
+        an_decl decl = an_decl_new(ast_from_box(AST_PAT, BOX(&pat)), ast_none(), ast_none());
+        p = ast_from_box(AST_DECL, BOX(&decl));
     }
 
     ast b[] = {a, d, p};
-    ast e = ast_list(AST_BLOCK, SLICE_FROM_ARRAY(b));
+    ast e = ast_from_list(AST_BLOCK, SLICE_FROM_ARRAY(b));
     ast_print(&e, stdout, false);
     puts("");
     ast_print(&e, stdout, true);

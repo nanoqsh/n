@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../def.h"
+#include "ast_types.h"
 
 typedef enum {
     AN_PAT_TUPLE,
@@ -12,27 +12,30 @@ typedef struct {
     an_pat_tag tag;
     union {
         struct {
-            box name;
-            box tuple;
+            ast name;
+            ast tuple_pat;
         } tuple;
         struct {
             bool tilda;
-            box name;
+            ast name;
         } name;
     } data;
 } an_pat;
 
-static an_pat an_pat_new_tuple(box name, box tuple) {
-    DEBUG_ASSERT(box_data(tuple));
+static an_pat an_pat_new_tuple(ast name, ast tuple_pat) {
+    DEBUG_ASSERT(name.tag == AST_NAME || name.tag == AST_NONE);
+    DEBUG_ASSERT(tuple_pat.tag == AST_TUPLE_PAT);
+
     return (an_pat){
         .tag = AN_PAT_TUPLE,
         .data.tuple.name = name,
-        .data.tuple.tuple = tuple,
+        .data.tuple.tuple_pat = tuple_pat,
     };
 }
 
-static an_pat an_pat_new_name(bool tilda, box name) {
-    DEBUG_ASSERT(box_data(name));
+static an_pat an_pat_new_name(bool tilda, ast name) {
+    DEBUG_ASSERT(name.tag == AST_NAME);
+
     return (an_pat){
         .tag = AN_PAT_NAME,
         .data.name.tilda = tilda,
@@ -49,12 +52,12 @@ static an_pat an_pat_new_under() {
 static void an_pat_drop(an_pat *self) {
     switch (self->tag) {
     case AN_PAT_TUPLE:
-        box_drop(self->data.tuple.name);
-        box_drop(self->data.tuple.tuple);
+        ast_drop(&self->data.tuple.name);
+        ast_drop(&self->data.tuple.tuple_pat);
         break;
 
     case AN_PAT_NAME:
-        box_drop(self->data.name.name);
+        ast_drop(&self->data.name.name);
         break;
 
     default:
@@ -74,18 +77,21 @@ static an_tuple_pat an_tuple_pat_new(bool tilda, box pats) {
     };
 }
 
-static void an_tuple_pat_drop(an_tuple_pat *self, hof on_item, word size) {
-    box_drop_array(self->pats, on_item, size);
+static void an_tuple_pat_drop(an_tuple_pat *self) {
+    box_drop_array(self->pats, HOF(ast_drop), sizeof(ast));
 }
 
 typedef struct {
-    box pat;
-    box typ;
-    box val;
+    ast pat;
+    ast typ;
+    ast val;
 } an_decl;
 
-static an_decl an_decl_new(box pat, box typ, box val) {
-    DEBUG_ASSERT(box_data(pat));
+static an_decl an_decl_new(ast pat, ast typ, ast val) {
+    DEBUG_ASSERT(pat.tag == AST_PAT);
+    DEBUG_ASSERT(typ.tag == AST_NONE);
+    DEBUG_ASSERT(val.tag == AST_NONE);
+
     return (an_decl){
         .pat = pat,
         .typ = typ,
@@ -94,7 +100,7 @@ static an_decl an_decl_new(box pat, box typ, box val) {
 }
 
 static void an_decl_drop(an_decl *self) {
-    box_drop(self->pat);
-    box_drop(self->typ);
-    box_drop(self->val);
+    ast_drop(&self->pat);
+    ast_drop(&self->typ);
+    ast_drop(&self->val);
 }

@@ -4,59 +4,6 @@
 #include "../tools/tok.h"
 #include "ast_nodes.h"
 
-typedef enum {
-    // expr
-    // leaf
-    AST_NUM,
-    AST_FLT,
-    AST_STR,
-    AST_CHR,
-    AST_BOOL,
-    AST_NAME,
-    // end leaf
-    AST_NEG,
-    AST_NOT,
-    // binary
-    AST_ADD,
-    AST_SUB,
-    AST_MUL,
-    AST_DIV,
-    AST_REM,
-    AST_EQ,
-    AST_NEQ,
-    AST_LT,
-    AST_GT,
-    AST_LE,
-    AST_GE,
-    AST_AND,
-    AST_OR,
-    AST_XOR,
-    // end binary
-    AST_TUPLE,
-    AST_BLOCK,
-    // end expr
-    AST_PAT,
-    AST_TUPLE_PAT,
-    AST_DECL,
-    AST_ERR,
-} ast_tag;
-
-bool ast_tag_is_leaf(ast_tag self) { return self >= AST_NUM && self <= AST_NAME; }
-
-bool ast_tag_is_expr(ast_tag self) { return self >= AST_NUM && self <= AST_BLOCK; }
-
-bool ast_tag_is_binary(ast_tag self) { return self >= AST_ADD && self <= AST_XOR; }
-
-typedef struct {
-    ast_tag tag;
-    union {
-        box x;
-        u8 b1;
-        u32 b4;
-        u64 b8;
-    } data;
-} ast;
-
 static ast ast_from_tok(const tok *t) {
     ast self;
     switch (t->tag) {
@@ -71,7 +18,7 @@ static ast ast_from_tok(const tok *t) {
             break;
         }
 
-        self.tag = AST_ERR;
+        self.tag = AST_NONE;
     }
 
     case TOK_FLT:
@@ -111,41 +58,6 @@ static ast ast_from_tok(const tok *t) {
     }
 
     return self;
-}
-
-static ast ast_from_box(ast_tag tag, box x) {
-    DEBUG_ASSERT(box_data(x));
-    return (ast){
-        .tag = tag,
-        .data.x = x,
-    };
-}
-
-static ast ast_single(ast_tag tag, ast node) {
-    DEBUG_ASSERT(!ast_tag_is_binary(tag));
-    DEBUG_ASSERT(ast_tag_is_expr(node.tag));
-    return ast_from_box(tag, BOX(&node));
-}
-
-static ast ast_binary(ast_tag tag, ast left, ast right) {
-    DEBUG_ASSERT(ast_tag_is_binary(tag));
-    DEBUG_ASSERT(ast_tag_is_expr(left.tag));
-    DEBUG_ASSERT(ast_tag_is_expr(right.tag));
-
-    ast pair[] = {left, right};
-    return (ast){
-        .tag = tag,
-        .data.x = BOX_FROM_ARRAY(pair),
-    };
-}
-
-static ast ast_list(ast_tag tag, slice list) {
-    DEBUG_ASSERT(tag == AST_BLOCK || tag == AST_TUPLE);
-
-    return (ast){
-        .tag = tag,
-        .data.x = box_from_slice(list),
-    };
 }
 
 static void ast_drop(const ast *self) {
@@ -198,22 +110,22 @@ static void ast_drop(const ast *self) {
 
     case AST_PAT: {
         x = self->data.x;
-        an_pat *d = box_data(x);
-        an_pat_drop(d);
+        an_pat *a = box_data(x);
+        an_pat_drop(a);
         break;
     }
 
     case AST_TUPLE_PAT: {
         x = self->data.x;
-        an_tuple_pat *d = box_data(x);
-        an_tuple_pat_drop(d, HOF(ast_drop), sizeof(ast));
+        an_tuple_pat *a = box_data(x);
+        an_tuple_pat_drop(a);
         break;
     }
 
     case AST_DECL: {
         x = self->data.x;
-        an_decl *d = box_data(x);
-        an_decl_drop(d);
+        an_decl *a = box_data(x);
+        an_decl_drop(a);
         break;
     }
 
@@ -275,6 +187,9 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
 
     const char *op;
     switch (self->tag) {
+    case AST_NONE:
+        UNREACHABLE;
+
     case AST_NUM:
         fprintf(info->file, "%lu", self->data.b8);
         break;
@@ -419,32 +334,31 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
 
     case AST_PAT: {
         box x = self->data.x;
-        an_pat *d = box_data(x);
-        switch (d->tag) {
+        an_pat *a = box_data(x);
+        switch (a->tag) {
         case AN_PAT_TUPLE: {
-            box name = d->data.tuple.name;
-
             ++info->level;
-            const ast *item;
-            if ((item = box_data(name))) {
-                _ast_print(item, info);
+
+            ast name = a->data.tuple.name;
+            if (name.tag != AST_NONE) {
+                _ast_print(&name, info);
                 fputc(' ', info->file);
             }
-            box tuple = d->data.tuple.tuple;
-            item = box_data(tuple);
-            _ast_print(item, info);
+
+            ast tuple_pat = a->data.tuple.tuple_pat;
+            _ast_print(&tuple_pat, info);
+
             --info->level;
             break;
         }
 
         case AN_PAT_NAME: {
-            if (d->data.name.tilda) {
+            if (a->data.name.tilda) {
                 fputc('~', info->file);
             }
 
-            box name = d->data.name.name;
-            const ast *item = box_data(name);
-            _ast_print(item, info);
+            ast name = a->data.name.name;
+            _ast_print(&name, info);
             break;
         }
 
@@ -455,17 +369,18 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
         default:
             UNREACHABLE;
         }
+
         break;
     }
 
     case AST_TUPLE_PAT: {
         box x = self->data.x;
-        an_tuple_pat *d = box_data(x);
-        if (d->tilda) {
+        an_tuple_pat *a = box_data(x);
+        if (a->tilda) {
             fputc('~', info->file);
         }
 
-        slice list = box_to_slice(d->pats);
+        slice list = box_to_slice(a->pats);
         fprintf(info->file, "%s", info->pretty ? "[ " COL_CYAN ".." COL_DEF " ]" : "[");
         _ast_print_slice(list, info, info->pretty ? "" : ", ", false);
         if (!info->pretty) {
@@ -475,12 +390,30 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
     }
 
     case AST_DECL: {
-        UNREACHABLE;
-    }
+        box x = self->data.x;
+        an_decl *a = box_data(x);
 
-    case AST_ERR:
-        fprintf(info->file, "%s", "ERR");
+        fprintf(info->file, "%s", "let ");
+
+        ++info->level;
+        ast pat = a->pat;
+        _ast_print(&pat, info);
+
+        ast typ = a->typ;
+        if (typ.tag != AST_NONE) {
+            fprintf(info->file, "%s", ": ");
+            _ast_print(&typ, info);
+        }
+
+        ast val = a->val;
+        if (val.tag != AST_NONE) {
+            fprintf(info->file, "%s", " = ");
+            _ast_print(&val, info);
+        }
+        --info->level;
+
         break;
+    }
 
     default:
         UNREACHABLE;
