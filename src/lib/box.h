@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hof.h"
 #include "slice.h"
 #include "types.h"
 #include <stdlib.h>
@@ -33,12 +34,18 @@ static box box_empty() { return box_from_slice(slice_empty()); }
 
 static void box_drop(box self) { free(self.data); }
 
-static void *box_data(box self) { return self.data; }
-
-static word box_len(box self) { return self.len; }
-
 static slice box_to_slice(box self) {
     void *start = self.data;
     void *end = self.data + self.len;
     return slice_new(start, end);
 }
+
+static void box_drop_array(box self, hof on_item, word size) {
+    slice s = box_to_slice(self);
+    slice_for_each(s, on_item, size);
+    box_drop(self);
+}
+
+static void *box_data(box self) { return self.data; }
+
+static word box_len(box self) { return self.len; }

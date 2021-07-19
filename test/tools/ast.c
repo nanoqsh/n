@@ -12,15 +12,6 @@ static void new_drop() {
         a = ast_binary(AST_AND, l, r);
     }
 
-    ast m;
-    {
-        tok lt = tok_new(TOK_STR, SLICE_STR("ni"));
-        tok rt = tok_new(TOK_DEC, SLICE_STR("5"));
-        ast l = ast_from_tok(&lt);
-        ast r = ast_from_tok(&rt);
-        m = ast_binary(AST_OR, l, r);
-    }
-
     ast d;
     {
         tok lt = tok_from_tag(TOK_TRU);
@@ -30,20 +21,22 @@ static void new_drop() {
         d = ast_binary(AST_XOR, l, r);
     }
 
-    ast i;
+    ast p;
     {
-        tok lt = tok_new(TOK_FLT, SLICE_STR("0.5"));
-        tok rt = tok_new(TOK_DEC, SLICE_STR("7"));
-        ast l = ast_from_tok(&lt);
-        ast r = ast_from_tok(&rt);
-        ast s = ast_binary(AST_ADD, l, r);
-        l = ast_from_tok(&lt);
-        r = ast_from_tok(&rt);
-        ast b[] = {s, l, r};
-        i = ast_list(AST_TUPLE, SLICE_FROM_ARRAY(b));
+        tok name = tok_new(TOK_NAME, SLICE_STR("Hi"));
+        ast n = ast_from_tok(&name);
+        tok a_name = tok_new(TOK_NAME, SLICE_STR("a"));
+        tok b_name = tok_new(TOK_NAME, SLICE_STR("b"));
+        ast a = ast_from_tok(&a_name);
+        ast b = ast_from_tok(&b_name);
+        ast pats[] = {a, b};
+        an_tuple_pat tup = an_tuple_pat_new(true, BOX_FROM_ARRAY(pats));
+        ast t = ast_from_box(AST_TUPLE_PAT, BOX(&tup));
+        an_pat pat = an_pat_new_tuple(BOX(&n), BOX(&t));
+        p = ast_from_box(AST_PAT, BOX(&pat));
     }
 
-    ast b[] = {a, m, i, d};
+    ast b[] = {a, d, p};
     ast e = ast_list(AST_BLOCK, SLICE_FROM_ARRAY(b));
     ast_print(&e, stdout, false);
     puts("");
