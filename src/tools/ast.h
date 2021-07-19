@@ -153,6 +153,7 @@ typedef struct {
     INDENT;
 
 static void _ast_print(const ast *, _ast_print_info *);
+
 static void _ast_print_slice(slice list, _ast_print_info *info, const char *sep, bool indent) {
     ++info->level;
     for (const ast *item = slice_start(list); item != slice_end(list); ++item) {
@@ -170,6 +171,55 @@ static void _ast_print_slice(slice list, _ast_print_info *info, const char *sep,
 
     if (indent) {
         INDENT2;
+    }
+}
+
+static void _ast_print_tuple_pat(const an_tuple_pat *a, _ast_print_info *info) {
+    if (a->tilda) {
+        fputc('~', info->file);
+    }
+
+    slice list = box_to_slice(a->pats);
+    fprintf(info->file, "%s", info->pretty ? "[ " COL_CYAN ".." COL_DEF " ]" : "[");
+    _ast_print_slice(list, info, info->pretty ? "" : ", ", false);
+    if (!info->pretty) {
+        fputc(']', info->file);
+    }
+}
+
+static void _ast_print_pat(const an_pat *a, _ast_print_info *info) {
+    switch (a->tag) {
+    case AN_PAT_TUPLE: {
+        box name = a->data.tuple.name;
+        if (box_data(name)) {
+            slice s = box_to_slice(name);
+            slice_print(s, info->file);
+            fputc(' ', info->file);
+        }
+
+        _ast_print_tuple_pat(&a->data.tuple.tuple, info);
+        break;
+    }
+
+    case AN_PAT_NAME: {
+        if (a->data.name.tilda) {
+            fputc('~', info->file);
+        }
+
+        box name = a->data.name.name;
+        if (box_data(name)) {
+            slice s = box_to_slice(name);
+            slice_print(s, info->file);
+        }
+        break;
+    }
+
+    case AN_PAT_UNDER:
+        fputc('_', info->file);
+        break;
+
+    default:
+        UNREACHABLE;
     }
 }
 
@@ -221,8 +271,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
         goto PRINT_UN;
 
     PRINT_UN : {
-        box x = self->data.x;
-        ast *node = box_data(x);
+        ast *node = box_data(self->data.x);
         if (info->pretty) {
             fprintf(info->file, "%s", op);
             ++info->level;
@@ -292,8 +341,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
         goto PRINT_BIN;
 
     PRINT_BIN : {
-        box x = self->data.x;
-        ast *pair = box_data(x);
+        ast *pair = box_data(self->data.x);
         if (info->pretty) {
             fprintf(info->file, "%s", op);
             ++info->level;
@@ -311,8 +359,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
     }
 
     case AST_TUPLE: {
-        box x = self->data.x;
-        slice list = box_to_slice(x);
+        slice list = box_to_slice(self->data.x);
         fprintf(info->file, "%s", info->pretty ? "[ " COL_CYAN ".." COL_DEF " ]" : "[ ");
         _ast_print_slice(list, info, ", ", false);
         if (!info->pretty) {
@@ -322,8 +369,7 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
     }
 
     case AST_BLOCK: {
-        box x = self->data.x;
-        slice list = box_to_slice(x);
+        slice list = box_to_slice(self->data.x);
         fprintf(info->file, "%s", info->pretty ? "{ " COL_CYAN ".." COL_DEF " }" : "{\n");
         _ast_print_slice(list, info, info->pretty ? "" : "\n    ", true);
         if (!info->pretty) {
@@ -333,85 +379,47 @@ static void _ast_print(const ast *self, _ast_print_info *info) {
     }
 
     case AST_PAT: {
-        box x = self->data.x;
-        an_pat *a = box_data(x);
-        switch (a->tag) {
-        case AN_PAT_TUPLE: {
-            ++info->level;
-
-            ast name = a->data.tuple.name;
-            if (name.tag != AST_NONE) {
-                _ast_print(&name, info);
-                fputc(' ', info->file);
-            }
-
-            ast tuple_pat = a->data.tuple.tuple_pat;
-            _ast_print(&tuple_pat, info);
-
-            --info->level;
-            break;
-        }
-
-        case AN_PAT_NAME: {
-            if (a->data.name.tilda) {
-                fputc('~', info->file);
-            }
-
-            ast name = a->data.name.name;
-            _ast_print(&name, info);
-            break;
-        }
-
-        case AN_PAT_UNDER:
-            fputc('_', info->file);
-            break;
-
-        default:
-            UNREACHABLE;
-        }
-
+        const an_pat *a = box_data(self->data.x);
+        _ast_print_pat(a, info);
         break;
     }
 
     case AST_TUPLE_PAT: {
-        box x = self->data.x;
-        an_tuple_pat *a = box_data(x);
-        if (a->tilda) {
-            fputc('~', info->file);
-        }
-
-        slice list = box_to_slice(a->pats);
-        fprintf(info->file, "%s", info->pretty ? "[ " COL_CYAN ".." COL_DEF " ]" : "[");
-        _ast_print_slice(list, info, info->pretty ? "" : ", ", false);
-        if (!info->pretty) {
-            fputc(']', info->file);
-        }
+        const an_tuple_pat *a = box_data(self->data.x);
+        _ast_print_tuple_pat(a, info);
         break;
     }
 
     case AST_DECL: {
-        box x = self->data.x;
-        an_decl *a = box_data(x);
-
         fprintf(info->file, "%s", "let ");
-
         ++info->level;
-        ast pat = a->pat;
-        _ast_print(&pat, info);
+
+        if (info->pretty) {
+            fputc('\n', info->file);
+            INDENT;
+            fprintf(info->file, "%s", COL_CYAN "- " COL_DEF);
+        }
+        an_decl *a = box_data(self->data.x);
+        _ast_print_pat(&a->pat, info);
 
         ast typ = a->typ;
         if (typ.tag != AST_NONE) {
-            fprintf(info->file, "%s", ": ");
+            if (!info->pretty) {
+                fprintf(info->file, "%s", ": ");
+            }
+
             _ast_print(&typ, info);
         }
 
         ast val = a->val;
         if (val.tag != AST_NONE) {
-            fprintf(info->file, "%s", " = ");
+            if (!info->pretty) {
+                fprintf(info->file, "%s", " = ");
+            }
+
             _ast_print(&val, info);
         }
         --info->level;
-
         break;
     }
 
