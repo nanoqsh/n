@@ -4,15 +4,15 @@
 
 static void to_num_dec() {
     const char *ss[] = {
-        "",
-        "0",
-        "1",
-        "2",
-        "12",
-        "63",
-        "64",
-        "1000",
-        "18446744073709551615",
+        "_",
+        "0_",
+        "1_",
+        "2_",
+        "12_",
+        "63_",
+        "6_4",
+        "100_0",
+        "1844674407370955161_5",
     };
     u64 ns[] = {
         0,
@@ -33,21 +33,21 @@ static void to_num_dec() {
         ASSERT(out == ns[i]);
     }
 
-    tok t = tok_new(TOK_DEC, SLICE_STR("18446744073709551616"));
+    tok t = tok_new(TOK_DEC, SLICE_STR("18446744073709551616_"));
     u64 out = 0;
     ASSERT(!tok_to_num(&t, &out));
 }
 
 static void to_num_bin() {
     const char *ss[] = {
-        "0b0",
-        "0b1",
-        "0b10",
-        "0b1100",
-        "0b111111",
-        "0b1000000",
-        "0b1111101000",
-        "0b1111111111111111111111111111111111111111111111111111111111111111",
+        "0b0_",
+        "0b_1",
+        "0b_10",
+        "0b11_00",
+        "0b1111_11",
+        "0b1_00_00_00",
+        "0b111110100_0",
+        "0b1111111111111111111111111111111111111111111111111111111111111111_",
     };
     u64 ns[] = {
         0,
@@ -68,7 +68,7 @@ static void to_num_bin() {
     }
 
     tok t = tok_new(
-        TOK_BIN, SLICE_STR("0b10000000000000000000000000000000000000000000000000000000000000000"));
+        TOK_BIN, SLICE_STR("0b10000000000000000000000000000000000000000000000000000000000000000_"));
     u64 out = 0;
     ASSERT(!tok_to_num(&t, &out));
 }
@@ -109,14 +109,14 @@ static void to_num_oct() {
 
 static void to_num_hex() {
     const char *ss[] = {
-        "0x0",
-        "0x1",
-        "0x2",
-        "0xC",
-        "0x3F",
-        "0x40",
-        "0x3E8",
-        "0xFFFFFFFFFFFFFFFF",
+        "0x0_",
+        "0x1_",
+        "0x2_",
+        "0xC_",
+        "0x3_F",
+        "0x4_0",
+        "0x3_E8",
+        "0xF_____FFFFFFFFFFFFFFF",
     };
     u64 ns[] = {
         0,
@@ -136,7 +136,7 @@ static void to_num_hex() {
         ASSERT(out == ns[i]);
     }
 
-    tok t = tok_new(TOK_HEX, SLICE_STR("0x10000000000000000"));
+    tok t = tok_new(TOK_HEX, SLICE_STR("0x10000000000000000_"));
     u64 out = 0;
     ASSERT(!tok_to_num(&t, &out));
 }

@@ -161,7 +161,13 @@ static wbool _exp_pred_not(lex *self, wbool (*pred)(char)) {
 static tok lex_scan_number(lex *self, u8 *start) {
     hof p = HOF_WITH(_exp_pred, is_dec);
     u8 *end = lex_expect_while(self, p);
+    _lex_state state = self->state;
     if (lex_expect_char(self, '.')) {
+        if (lex_expect_char(self, '.') || lex_expect_char(self, '|')) {
+            self->state = state;
+            return tok_new(TOK_DEC, SLICE(start, end));
+        }
+
         end = lex_expect_while(self, p);
         return tok_new(TOK_FLT, SLICE(start, end));
     }
@@ -311,6 +317,10 @@ static tok lex_scan(lex *self) {
             return tok_new(TOK_LET, name);
         }
 
+        if (slice_cmp(name, SLICE_STR("type"))) {
+            return tok_new(TOK_TYPE, name);
+        }
+
         if (slice_cmp(name, SLICE_STR("ret"))) {
             return tok_new(TOK_RET, name);
         }
@@ -320,7 +330,11 @@ static tok lex_scan(lex *self) {
         }
 
         if (slice_cmp(name, SLICE_STR("el"))) {
-            return tok_new(TOK_ELSE, name);
+            return tok_new(TOK_EL, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("when"))) {
+            return tok_new(TOK_WHEN, name);
         }
 
         if (slice_cmp(name, SLICE_STR("for"))) {
@@ -331,7 +345,30 @@ static tok lex_scan(lex *self) {
             return tok_new(TOK_IN, name);
         }
 
+        if (slice_cmp(name, SLICE_STR("go"))) {
+            return tok_new(TOK_GO, name);
+        }
+
+        if (slice_cmp(name, SLICE_STR("_"))) {
+            return tok_new(TOK_UNDER, name);
+        }
+
         return tok_new(TOK_NAME, name);
+    }
+
+    if (lex_expect_char(self, '~')) {
+        return tok_from_tag(TOK_TILDA);
+    }
+
+    if (lex_expect_char(self, '.')) {
+        if (lex_expect_char(self, '.')) {
+            return tok_from_tag(TOK_RNG_CC);
+        }
+
+        if (lex_expect_char(self, '|')) {
+            return tok_from_tag(TOK_RNG_CO);
+        }
+        return tok_from_tag(TOK_DOT);
     }
 
     if (lex_expect_char(self, ',')) {
@@ -415,6 +452,14 @@ static tok lex_scan(lex *self) {
     if (lex_expect_char(self, '|')) {
         if (lex_expect_char(self, '=')) {
             return tok_from_tag(TOK_OR_ASSIGN);
+        }
+
+        if (lex_expect_char(self, '.')) {
+            return tok_from_tag(TOK_RNG_OC);
+        }
+
+        if (lex_expect_char(self, '|')) {
+            return tok_from_tag(TOK_RNG_OO);
         }
         return tok_from_tag(TOK_OR);
     }

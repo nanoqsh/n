@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../def.h"
+#include "conv.h"
 #include <stdio.h>
 
 typedef enum {
@@ -25,11 +26,17 @@ typedef enum {
     TOK_FAL,
     TOK_NAME,
     TOK_LET,
+    TOK_TYPE,
     TOK_RET,
     TOK_IF,
-    TOK_ELSE,
+    TOK_EL,
+    TOK_WHEN,
     TOK_FOR,
     TOK_IN,
+    TOK_GO,
+    TOK_UNDER,
+    TOK_TILDA,
+    TOK_DOT,
     TOK_COMMA,
     TOK_COLON,
     TOK_ASSIGN,
@@ -56,6 +63,10 @@ typedef enum {
     TOK_AND_ASSIGN,
     TOK_OR_ASSIGN,
     TOK_XOR_ASSIGN,
+    TOK_RNG_CC,
+    TOK_RNG_OC,
+    TOK_RNG_CO,
+    TOK_RNG_OO,
     TOK_END,
     TOK_ERR,
 } tok_tag;
@@ -74,45 +85,11 @@ static tok tok_new(tok_tag tag, slice str) {
 
 static tok tok_from_tag(tok_tag tag) { return tok_new(tag, slice_empty()); }
 
-static bool _tok_str_to_num(slice str, u8 base, u64 *out) {
-    u64 base_pow = 1;
-    u8 *p = slice_end(str);
-    while (p != slice_start(str)) {
-        u8 c = *--p;
-        u8 d;
-        if (c >= '0' && c <= '9') {
-            d = c - '0';
-        } else if (c >= 'A' && c <= 'F') {
-            d = c - 'A' + 10;
-        } else {
-            UNREACHABLE;
-        }
-
-        u64 n = d * base_pow;
-        if (n / base_pow != d) {
-            return false;
-        }
-
-        *out += n;
-        if (*out < n) {
-            return false;
-        }
-
-        u64 pow = base_pow * base;
-        if (pow / base != base_pow) {
-            return p == str.start;
-        }
-        base_pow = pow;
-    }
-
-    return true;
-}
-
 static bool tok_to_num(const tok *self, u64 *out) {
     u8 base;
     switch (self->tag) {
     case TOK_DEC:
-        return _tok_str_to_num(self->str, 10, out);
+        return conv_str_to_num(self->str, 10, out);
 
     case TOK_BIN:
         base = 2;
@@ -132,7 +109,7 @@ static bool tok_to_num(const tok *self, u64 *out) {
 
     word len = slice_len_bytes(self->str);
     slice str = slice_subslice(self->str, RANGE(2, len), sizeof(u8));
-    return _tok_str_to_num(str, base, out);
+    return conv_str_to_num(str, base, out);
 }
 
 static void tok_print(const tok *self, FILE *file) {
@@ -234,6 +211,10 @@ static void tok_print(const tok *self, FILE *file) {
         fprintf(file, "%s", "let");
         break;
 
+    case TOK_TYPE:
+        fprintf(file, "%s", "type");
+        break;
+
     case TOK_RET:
         fprintf(file, "%s", "ret");
         break;
@@ -242,8 +223,12 @@ static void tok_print(const tok *self, FILE *file) {
         fprintf(file, "%s", "if");
         break;
 
-    case TOK_ELSE:
+    case TOK_EL:
         fprintf(file, "%s", "el");
+        break;
+
+    case TOK_WHEN:
+        fprintf(file, "%s", "when");
         break;
 
     case TOK_FOR:
@@ -252,6 +237,22 @@ static void tok_print(const tok *self, FILE *file) {
 
     case TOK_IN:
         fprintf(file, "%s", "in");
+        break;
+
+    case TOK_GO:
+        fprintf(file, "%s", "go");
+        break;
+
+    case TOK_UNDER:
+        fputc('_', file);
+        break;
+
+    case TOK_TILDA:
+        fputc('~', file);
+        break;
+
+    case TOK_DOT:
+        fputc('.', file);
         break;
 
     case TOK_COMMA:
@@ -356,6 +357,22 @@ static void tok_print(const tok *self, FILE *file) {
 
     case TOK_XOR_ASSIGN:
         fprintf(file, "%s", "^=");
+        break;
+
+    case TOK_RNG_CC:
+        fprintf(file, "%s", "..");
+        break;
+
+    case TOK_RNG_OC:
+        fprintf(file, "%s", "|.");
+        break;
+
+    case TOK_RNG_CO:
+        fprintf(file, "%s", ".|");
+        break;
+
+    case TOK_RNG_OO:
+        fprintf(file, "%s", "||");
         break;
 
     case TOK_END:

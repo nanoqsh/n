@@ -7,8 +7,8 @@ int main() {
     // TEST_RUN(node);
     // TEST_RUN(vec);
 
-    TEST_RUN(ast);
-    // TEST_RUN(lex);
+    // TEST_RUN(ast);
+    TEST_RUN(lex);
     TEST_RUN(tok);
 
     puts(COL_GREEN "Ok" COL_DEF);

@@ -5,9 +5,8 @@
 #include <stdio.h>
 
 static void scan() {
-    const char *src = "let x = 0\
-    for i in 0 { 8. * x == 5 }\
-    if x <= 6 { tru } el { fal }";
+    const char *src = "let ~x = 0\
+    for i in 0..7 { 7 .hi() }";
 
     lex l = lex_new(SLICE_STR(src));
     tok t;
