@@ -15,6 +15,9 @@ typedef struct {
     bool color;
 } ast_printer;
 
+typedef struct an an;
+static void _an_print(const an *, ast_printer *);
+
 static void ast_printer_print_string(ast_printer *self, const char *text) {
     fprintf(self->file, "%s", text);
 }
@@ -63,4 +66,78 @@ static void ast_printer_print_range(ast_printer *self) {
     }
 
     _ast_printer_print_color_string(self, " .. ");
+}
+
+static void ast_printer_print_ast_unary(ast_printer *self, const an *ast, const char *op) {
+    switch (self->mode) {
+    case AST_PRINTER_MODE_TREE: {
+        ast_printer_print_node(self);
+        ast_printer_print_string(self, op);
+        ast_printer_nl(self);
+        ++self->level;
+        _an_print(ast, self);
+        --self->level;
+        break;
+    }
+    case AST_PRINTER_MODE_PLAIN: {
+        ast_printer_print_string(self, op);
+        _an_print(ast, self);
+        break;
+    }
+    default:
+        UNREACHABLE;
+    }
+}
+
+static void ast_printer_print_ast_binary(ast_printer *self, const an **ast, const char *op) {
+    switch (self->mode) {
+    case AST_PRINTER_MODE_TREE: {
+        ast_printer_print_node(self);
+        ast_printer_print_string(self, op);
+        ast_printer_nl(self);
+        ++self->level;
+        _an_print(ast[0], self);
+        _an_print(ast[1], self);
+        --self->level;
+        break;
+    }
+    case AST_PRINTER_MODE_PLAIN: {
+        _an_print(ast[0], self);
+        ast_printer_print_char(self, ' ');
+        ast_printer_print_string(self, op);
+        ast_printer_print_char(self, ' ');
+        _an_print(ast[1], self);
+        break;
+    }
+    default:
+        UNREACHABLE;
+    }
+}
+
+static void ast_printer_print_ast_list(ast_printer *self, slice list, const char *sep, word size) {
+    switch (self->mode) {
+    case AST_PRINTER_MODE_TREE: {
+        ast_printer_print_node(self);
+        ast_printer_print_range(self);
+        ++self->level;
+        for (const u8 *item = slice_start(list); item != slice_end(list); item += size) {
+            ast_printer_print_node(self);
+            _an_print((const an *)item, self);
+        }
+        --self->level;
+        break;
+    }
+    case AST_PRINTER_MODE_PLAIN: {
+        for (const u8 *item = slice_start(list); item != slice_end(list); item += size) {
+            if (item != slice_start(list)) {
+                ast_printer_print_string(self, sep);
+            }
+
+            _an_print((const an *)item, self);
+        }
+        break;
+    }
+    default:
+        UNREACHABLE;
+    }
 }

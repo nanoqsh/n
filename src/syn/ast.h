@@ -6,10 +6,6 @@
 typedef struct an an;
 static bool an_is_expr(const an *);
 static void an_drop(const an *);
-static void _an_print_ast_unary(const an *, const char *, ast_printer *);
-static void _an_print_ast_binary(const an **, const char *, ast_printer *);
-static void _an_print_ast_list(slice, const char *, ast_printer *);
-static void _an_print(const an *, ast_printer *);
 
 typedef struct {
     bool tilda;
@@ -229,7 +225,7 @@ static void an_log_print(const an_log *self, ast_printer *printer) {
     const char *op;
     switch (self->tag) {
     case AN_LOG__NOT: {
-        _an_print_ast_unary(box_data(self->lhs), "!", printer);
+        ast_printer_print_ast_unary(printer, box_data(self->lhs), "!");
         return;
     }
     case AN_LOG__AND: {
@@ -249,7 +245,7 @@ static void an_log_print(const an_log *self, ast_printer *printer) {
     }
 
     const an *ans[] = {box_data(self->lhs), box_data(self->rhs)};
-    _an_print_ast_binary(ans, op, printer);
+    ast_printer_print_ast_binary(printer, ans, op);
 }
 
 typedef enum {
@@ -315,80 +311,6 @@ static bool an_is_expr(const an *self) {
     }
     default:
         return false;
-    }
-}
-
-static void _an_print_ast_unary(const an *self, const char *op, ast_printer *printer) {
-    switch (printer->mode) {
-    case AST_PRINTER_MODE_TREE: {
-        ast_printer_print_node(printer);
-        ast_printer_print_string(printer, op);
-        ast_printer_nl(printer);
-        ++printer->level;
-        _an_print(self, printer);
-        --printer->level;
-        break;
-    }
-    case AST_PRINTER_MODE_PLAIN: {
-        ast_printer_print_string(printer, op);
-        _an_print(self, printer);
-        break;
-    }
-    default:
-        UNREACHABLE;
-    }
-}
-
-static void _an_print_ast_binary(const an **self, const char *op, ast_printer *printer) {
-    switch (printer->mode) {
-    case AST_PRINTER_MODE_TREE: {
-        ast_printer_print_node(printer);
-        ast_printer_print_string(printer, op);
-        ast_printer_nl(printer);
-        ++printer->level;
-        _an_print(self[0], printer);
-        _an_print(self[1], printer);
-        --printer->level;
-        break;
-    }
-    case AST_PRINTER_MODE_PLAIN: {
-        _an_print(self[0], printer);
-        ast_printer_print_char(printer, ' ');
-        ast_printer_print_string(printer, op);
-        ast_printer_print_char(printer, ' ');
-        _an_print(self[1], printer);
-        break;
-    }
-    default:
-        UNREACHABLE;
-    }
-}
-
-static void _an_print_ast_list(slice list, const char *sep, ast_printer *printer) {
-    switch (printer->mode) {
-    case AST_PRINTER_MODE_TREE: {
-        ast_printer_print_node(printer);
-        ast_printer_print_range(printer);
-        ++printer->level;
-        for (const an *self = slice_start(list); self != slice_end(list); ++self) {
-            ast_printer_print_node(printer);
-            _an_print(self, printer);
-        }
-        --printer->level;
-        break;
-    }
-    case AST_PRINTER_MODE_PLAIN: {
-        for (const an *self = slice_start(list); self != slice_end(list); ++self) {
-            if (self != slice_start(list)) {
-                ast_printer_print_string(printer, sep);
-            }
-
-            _an_print(self, printer);
-        }
-        break;
-    }
-    default:
-        UNREACHABLE;
     }
 }
 
