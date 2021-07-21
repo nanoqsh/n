@@ -16,5 +16,3 @@ void test_node();
 void test_vec();
 
 void test_ast();
-void test_lex();
-void test_tok();

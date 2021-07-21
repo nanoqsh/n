@@ -27,6 +27,14 @@ static void ast_printer_print_u64(ast_printer *self, u64 val) { fprintf(self->fi
 
 static void ast_printer_print_char(ast_printer *self, u32 val) { fputc(val, self->file); }
 
+static void ast_printer_nl(ast_printer *self) {
+    if (self->mode != AST_PRINTER_MODE_TREE) {
+        return;
+    }
+
+    fputc('\n', self->file);
+}
+
 static void _ast_printer_print_color_string(ast_printer *self, const char *text) {
     if (self->color) {
         fprintf(self->file, "%s", COL_CYAN);
@@ -47,4 +55,12 @@ static void ast_printer_print_node(ast_printer *self) {
     }
 
     _ast_printer_print_color_string(self, "- ");
+}
+
+static void ast_printer_print_range(ast_printer *self) {
+    if (self->mode != AST_PRINTER_MODE_TREE) {
+        return;
+    }
+
+    _ast_printer_print_color_string(self, " .. ");
 }
