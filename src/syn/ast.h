@@ -334,11 +334,6 @@ static void _an_print(const an *self, ast_printer *printer) {
 }
 
 static void an_print(const an *self, bool tree) {
-    ast_printer printer = {
-        .file = stdout,
-        .mode = tree ? AST_PRINTER_MODE_TREE : AST_PRINTER_MODE_PLAIN,
-        .level = 0,
-        .color = true,
-    };
+    ast_printer printer = ast_printer_new(stdout, tree);
     _an_print(self, &printer);
 }

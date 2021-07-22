@@ -18,6 +18,15 @@ typedef struct {
 typedef struct an an;
 static void _an_print(const an *, ast_printer *);
 
+static ast_printer ast_printer_new(FILE *file, bool tree) {
+    return (ast_printer){
+        .file = file,
+        .mode = tree ? AST_PRINTER_MODE_TREE : AST_PRINTER_MODE_PLAIN,
+        .level = 0,
+        .color = true,
+    };
+}
+
 static void ast_printer_print_string(ast_printer *self, const char *text) {
     fprintf(self->file, "%s", text);
 }
