@@ -75,7 +75,7 @@ static void ast_printer_print_range(ast_printer *self) {
     _ast_printer_print_color_string(self, " .. ");
 }
 
-static void ast_printer_print_ast_un(ast_printer *self, const char *op, hof print) {
+static void ast_printer_print_un(ast_printer *self, const char *op, hof print) {
     self->index = 0;
     switch (self->mode) {
     case AST_PRINTER_MODE_TREE: {
@@ -97,7 +97,7 @@ static void ast_printer_print_ast_un(ast_printer *self, const char *op, hof prin
     }
 }
 
-static void ast_printer_print_ast_bin(ast_printer *self, const char *op, hof print) {
+static void ast_printer_print_bin(ast_printer *self, const char *op, hof print) {
     switch (self->mode) {
     case AST_PRINTER_MODE_TREE: {
         ast_printer_print_node(self);
@@ -126,7 +126,7 @@ static void ast_printer_print_ast_bin(ast_printer *self, const char *op, hof pri
     }
 }
 
-static void ast_printer_print_ast_list(ast_printer *self, const char *sep, hof print, word len) {
+static void ast_printer_print_list(ast_printer *self, const char *sep, hof print, word len) {
     switch (self->mode) {
     case AST_PRINTER_MODE_TREE: {
         ast_printer_print_node(self);

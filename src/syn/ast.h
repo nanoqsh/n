@@ -2,8 +2,9 @@
 
 #include "../def.h"
 #include "ast_printer.h"
+#include "ast_types.h"
 
-typedef struct {
+typedef struct an_path {
     box head;
     box tail;
 } an_path;
@@ -34,7 +35,7 @@ static void an_path_print(const an_path *self, ast_printer *printer) {
     ast_printer_print_slice(printer, box_to_slice(self->head));
 }
 
-typedef struct {
+typedef struct an_var {
     bool tilda;
     box name;
 } an_var;
@@ -67,7 +68,7 @@ typedef enum {
     AN_VAL__PATH,
 } an_val_tag;
 
-typedef struct {
+typedef struct an_val {
     an_val_tag tag;
     union {
         an_path an_path;
@@ -203,7 +204,7 @@ typedef enum {
     AN_EXPR__BLOCK_EXPR,
 } an_expr_tag;
 
-typedef struct an {
+typedef struct an_expr {
     an_expr_tag tag;
     union {
         an_val an_val;
@@ -436,7 +437,7 @@ static void _an_expr_print(const an_expr *self, ast_printer *printer) {
     }
     PRINT_UN : {
         const an_expr *ex = box_data(self->val.box);
-        ast_printer_print_ast_un(printer, op, HOF_WITH(_an_expr_print_un, ex));
+        ast_printer_print_un(printer, op, HOF_WITH(_an_expr_print_un, ex));
         break;
     }
     case AN_EXPR__ADD: {
@@ -501,7 +502,7 @@ static void _an_expr_print(const an_expr *self, ast_printer *printer) {
     }
     PRINT_BIN : {
         const an_expr *ex[] = {box_data(self->val.pair[0]), box_data(self->val.pair[1])};
-        ast_printer_print_ast_bin(printer, op, HOF_WITH(_an_expr_print_bin, ex));
+        ast_printer_print_bin(printer, op, HOF_WITH(_an_expr_print_bin, ex));
         break;
     }
     default:
