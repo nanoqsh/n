@@ -329,10 +329,6 @@ static tok lex_scan(lex *self) {
             return tok_new(TOK_IF, name);
         }
 
-        if (slice_cmp(name, SLICE_STR("el"))) {
-            return tok_new(TOK_EL, name);
-        }
-
         if (slice_cmp(name, SLICE_STR("when"))) {
             return tok_new(TOK_WHEN, name);
         }

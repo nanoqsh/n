@@ -29,7 +29,6 @@ typedef enum {
     TOK_TYPE,
     TOK_RET,
     TOK_IF,
-    TOK_EL,
     TOK_WHEN,
     TOK_FOR,
     TOK_IN,
@@ -221,10 +220,6 @@ static void tok_print(const tok *self, FILE *file) {
 
     case TOK_IF:
         fprintf(file, "%s", "if");
-        break;
-
-    case TOK_EL:
-        fprintf(file, "%s", "el");
         break;
 
     case TOK_WHEN:
