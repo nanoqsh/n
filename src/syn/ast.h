@@ -3,9 +3,36 @@
 #include "../def.h"
 #include "ast_printer.h"
 
-typedef struct an an;
-static bool an_is_expr(const an *);
-static void an_drop(const an *);
+typedef struct {
+    box head;
+    box tail;
+} an_path;
+
+// head: str
+// tail: [str]
+static an_path an_path_new(box head, box tail) {
+    return (an_path){
+        .head = head,
+        .tail = tail,
+    };
+}
+
+static void _an_path_drop(const box *name) { box_drop(*name); }
+
+static void an_path_drop(const an_path *self) {
+    box_drop(self->head);
+    box_drop_array(self->tail, HOF(_an_path_drop), sizeof(box));
+}
+
+static void an_path_print(const an_path *self, ast_printer *printer) {
+    ast_printer_print_node(printer);
+    slice tail = box_to_slice(self->tail);
+    for (const box *name = slice_start(tail); name != slice_end(tail); ++name) {
+        ast_printer_print_slice(printer, box_to_slice(*name));
+        ast_printer_print_char(printer, '.');
+    }
+    ast_printer_print_slice(printer, box_to_slice(self->head));
+}
 
 typedef struct {
     bool tilda;
@@ -37,12 +64,13 @@ typedef enum {
     AN_VAL__STR,
     AN_VAL__CHR,
     AN_VAL__BOOL,
-    AN_VAL__NAME,
+    AN_VAL__PATH,
 } an_val_tag;
 
 typedef struct {
     an_val_tag tag;
     union {
+        an_path an_path;
         box box;
         u8 u8;
         u32 u32;
@@ -87,20 +115,22 @@ static an_val an_val_new_bool(bool val) {
     };
 }
 
-// val: str
-static an_val an_val_new_name(box val) {
+static an_val an_val_new_path(an_path val) {
     return (an_val){
-        .tag = AN_VAL__NAME,
-        .val.box = val,
+        .tag = AN_VAL__PATH,
+        .val.an_path = val,
     };
 }
 
 static void an_val_drop(const an_val *self) {
     switch (self->tag) {
     case AN_VAL__FLT:
-    case AN_VAL__STR:
-    case AN_VAL__NAME: {
+    case AN_VAL__STR: {
         box_drop(self->val.box);
+        break;
+    }
+    case AN_VAL__PATH: {
+        an_path_drop(&self->val.an_path);
         break;
     }
     default:
@@ -109,31 +139,38 @@ static void an_val_drop(const an_val *self) {
 }
 
 static void an_val_print(const an_val *self, ast_printer *printer) {
-    ast_printer_print_node(printer);
     switch (self->tag) {
     case AN_VAL__INT: {
+        ast_printer_print_node(printer);
         ast_printer_print_u64(printer, self->val.u64);
         break;
     }
-    case AN_VAL__FLT:
-    case AN_VAL__NAME: {
+    case AN_VAL__FLT: {
+        ast_printer_print_node(printer);
         ast_printer_print_slice(printer, box_to_slice(self->val.box));
         break;
     }
     case AN_VAL__STR: {
+        ast_printer_print_node(printer);
         ast_printer_print_string(printer, "\"");
         ast_printer_print_slice(printer, box_to_slice(self->val.box));
         ast_printer_print_string(printer, "\"");
         break;
     }
     case AN_VAL__CHR: {
+        ast_printer_print_node(printer);
         ast_printer_print_string(printer, "'");
         ast_printer_print_char(printer, self->val.u32);
         ast_printer_print_string(printer, "'");
         break;
     }
     case AN_VAL__BOOL: {
+        ast_printer_print_node(printer);
         ast_printer_print_string(printer, self->val.u8 ? "tru" : "fal");
+        break;
+    }
+    case AN_VAL__PATH: {
+        an_path_print(&self->val.an_path, printer);
         break;
     }
     default:
@@ -143,538 +180,229 @@ static void an_val_print(const an_val *self, ast_printer *printer) {
 }
 
 typedef enum {
-    AN_LOG__NOT,
-    AN_LOG__AND,
-    AN_LOG__OR,
-    AN_LOG__XOR,
-} an_log_tag;
-
-typedef struct {
-    an_log_tag tag;
-    box lhs;
-    box rhs;
-} an_log;
-
-// val: an (expr)
-static an_log an_log_new_not(box val) {
-    DEBUG_ASSERT(an_is_expr(box_data(val)));
-    return (an_log){
-        .tag = AN_LOG__NOT,
-        .lhs = val,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_log an_log_new_and(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_log){
-        .tag = AN_LOG__AND,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_log an_log_new_or(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_log){
-        .tag = AN_LOG__OR,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_log an_log_new_xor(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_log){
-        .tag = AN_LOG__XOR,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-static void an_log_drop(const an_log *self) {
-    switch (self->tag) {
-    case AN_LOG__NOT: {
-        an_drop(box_data(self->lhs));
-        box_drop(self->lhs);
-        break;
-    }
-    case AN_LOG__AND:
-    case AN_LOG__OR:
-    case AN_LOG__XOR: {
-        an_drop(box_data(self->lhs));
-        box_drop(self->lhs);
-        an_drop(box_data(self->rhs));
-        box_drop(self->rhs);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static void an_log_print(const an_log *self, ast_printer *printer) {
-    const char *op;
-    switch (self->tag) {
-    case AN_LOG__NOT: {
-        ast_printer_print_ast_unary(printer, box_data(self->lhs), "!");
-        return;
-    }
-    case AN_LOG__AND: {
-        op = "&";
-        break;
-    }
-    case AN_LOG__OR: {
-        op = "|";
-        break;
-    }
-    case AN_LOG__XOR: {
-        op = "^";
-        break;
-    }
-    default:
-        UNREACHABLE;
-    }
-
-    const an *ans[] = {box_data(self->lhs), box_data(self->rhs)};
-    ast_printer_print_ast_binary(printer, ans, op);
-}
-
-typedef enum {
-    AN_PRO__MUL,
-    AN_PRO__DIV,
-    AN_PRO__REM,
-} an_pro_tag;
-
-typedef struct {
-    an_pro_tag tag;
-    box lhs;
-    box rhs;
-} an_pro;
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_pro an_pro_new_mul(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_pro){
-        .tag = AN_PRO__MUL,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_pro an_pro_new_div(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_pro){
-        .tag = AN_PRO__DIV,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_pro an_pro_new_rem(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_pro){
-        .tag = AN_PRO__REM,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-static void an_pro_drop(const an_pro *self) {
-    an_drop(box_data(self->lhs));
-    box_drop(self->lhs);
-    an_drop(box_data(self->rhs));
-    box_drop(self->rhs);
-}
-
-static void an_pro_print(const an_pro *self, ast_printer *printer) {
-    const char *op;
-    switch (self->tag) {
-    case AN_PRO__MUL: {
-        op = "*";
-        break;
-    }
-    case AN_PRO__DIV: {
-        op = "/";
-        break;
-    }
-    case AN_PRO__REM: {
-        op = "%";
-        break;
-    }
-    default:
-        UNREACHABLE;
-    }
-
-    const an *ans[] = {box_data(self->lhs), box_data(self->rhs)};
-    ast_printer_print_ast_binary(printer, ans, op);
-}
-
-typedef enum {
-    AN_SUM__NEG,
-    AN_SUM__ADD,
-    AN_SUM__SUB,
-} an_sum_tag;
-
-typedef struct {
-    an_sum_tag tag;
-    box lhs;
-    box rhs;
-} an_sum;
-
-// val: an (expr)
-static an_sum an_sum_new_neg(box val) {
-    DEBUG_ASSERT(an_is_expr(box_data(val)));
-    return (an_sum){
-        .tag = AN_SUM__NEG,
-        .lhs = val,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_sum an_sum_new_add(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_sum){
-        .tag = AN_SUM__ADD,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_sum an_sum_new_sub(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_sum){
-        .tag = AN_SUM__SUB,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-static void an_sum_drop(const an_sum *self) {
-    switch (self->tag) {
-    case AN_SUM__NEG: {
-        an_drop(box_data(self->lhs));
-        box_drop(self->lhs);
-        break;
-    }
-    case AN_SUM__ADD:
-    case AN_SUM__SUB: {
-        an_drop(box_data(self->lhs));
-        box_drop(self->lhs);
-        an_drop(box_data(self->rhs));
-        box_drop(self->rhs);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static void an_sum_print(const an_sum *self, ast_printer *printer) {
-    const char *op;
-    switch (self->tag) {
-    case AN_SUM__NEG: {
-        ast_printer_print_ast_unary(printer, box_data(self->lhs), "-");
-        return;
-    }
-    case AN_SUM__ADD: {
-        op = "+";
-        break;
-    }
-    case AN_SUM__SUB: {
-        op = "-";
-        break;
-    }
-    default:
-        UNREACHABLE;
-    }
-
-    const an *ans[] = {box_data(self->lhs), box_data(self->rhs)};
-    ast_printer_print_ast_binary(printer, ans, op);
-}
-
-typedef enum {
-    AN_CMP__EQ,
-    AN_CMP__NE,
-    AN_CMP__LT,
-    AN_CMP__GT,
-    AN_CMP__LE,
-    AN_CMP__GE,
-} an_cmp_tag;
-
-typedef struct {
-    an_cmp_tag tag;
-    box lhs;
-    box rhs;
-} an_cmp;
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_cmp an_cmp_new_eq(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_cmp){
-        .tag = AN_CMP__EQ,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_cmp an_cmp_new_ne(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_cmp){
-        .tag = AN_CMP__NE,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_cmp an_cmp_new_lt(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_cmp){
-        .tag = AN_CMP__LT,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_cmp an_cmp_new_gt(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_cmp){
-        .tag = AN_CMP__GT,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_cmp an_cmp_new_le(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_cmp){
-        .tag = AN_CMP__LE,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-// lhs: an (expr)
-// rhs: an (expr)
-static an_cmp an_cmp_new_ge(box lhs, box rhs) {
-    DEBUG_ASSERT(an_is_expr(box_data(lhs)));
-    DEBUG_ASSERT(an_is_expr(box_data(rhs)));
-    return (an_cmp){
-        .tag = AN_CMP__GE,
-        .lhs = lhs,
-        .rhs = rhs,
-    };
-}
-
-static void an_cmp_drop(const an_cmp *self) {
-    an_drop(box_data(self->lhs));
-    box_drop(self->lhs);
-    an_drop(box_data(self->rhs));
-    box_drop(self->rhs);
-}
-
-static void an_cmp_print(const an_cmp *self, ast_printer *printer) {
-    const char *op;
-    switch (self->tag) {
-    case AN_CMP__EQ: {
-        op = "==";
-        break;
-    }
-    case AN_CMP__NE: {
-        op = "!=";
-        break;
-    }
-    case AN_CMP__LT: {
-        op = "<";
-        break;
-    }
-    case AN_CMP__GT: {
-        op = ">";
-        break;
-    }
-    case AN_CMP__LE: {
-        op = "<=";
-        break;
-    }
-    case AN_CMP__GE: {
-        op = ">=";
-        break;
-    }
-    default:
-        UNREACHABLE;
-    }
-
-    const an *ans[] = {box_data(self->lhs), box_data(self->rhs)};
-    ast_printer_print_ast_binary(printer, ans, op);
-}
-
-typedef enum {
-    AN__VAR,
-    AN__VAL,
-    AN__LOG,
-    AN__PRO,
-    AN__SUM,
-    AN__CMP,
-} an_tag;
+    AN_EXPR__VAL,
+    AN_EXPR__NEG,
+    AN_EXPR__ADD,
+    AN_EXPR__SUB,
+    AN_EXPR__MUL,
+    AN_EXPR__DIV,
+    AN_EXPR__REM,
+    AN_EXPR__NOT,
+    AN_EXPR__AND,
+    AN_EXPR__OR,
+    AN_EXPR__XOR,
+    AN_EXPR__EQ,
+    AN_EXPR__NE,
+    AN_EXPR__LT,
+    AN_EXPR__GT,
+    AN_EXPR__LE,
+    AN_EXPR__GE,
+    AN_EXPR__IF,
+    AN_EXPR__FN,
+    AN_EXPR__FN_CALL,
+    AN_EXPR__BLOCK_EXPR,
+} an_expr_tag;
 
 typedef struct an {
-    an_tag tag;
+    an_expr_tag tag;
     union {
-        an_var an_var;
         an_val an_val;
-        an_log an_log;
-        an_pro an_pro;
-        an_sum an_sum;
-        an_cmp an_cmp;
+        box box;
+        box pair[2];
     } val;
-} an;
+} an_expr;
 
-static an an_new_var(an_var var) {
-    return (an){
-        .tag = AN__VAR,
-        .val.an_var = var,
-    };
-}
-
-static an an_new_val(an_val val) {
-    return (an){
-        .tag = AN__VAL,
+static an_expr an_expr_new_val(an_val val) {
+    return (an_expr){
+        .tag = AN_EXPR__VAL,
         .val.an_val = val,
     };
 }
 
-static an an_new_log(an_log val) {
-    return (an){
-        .tag = AN__LOG,
-        .val.an_log = val,
+// val: an_expr
+static an_expr an_expr_new_neg(box val) {
+    return (an_expr){
+        .tag = AN_EXPR__NEG,
+        .val.box = val,
     };
 }
 
-static an an_new_pro(an_pro val) {
-    return (an){
-        .tag = AN__PRO,
-        .val.an_pro = val,
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_add(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__ADD,
+        .val.pair = {lhs, rhs},
     };
 }
 
-static an an_new_sum(an_sum val) {
-    return (an){
-        .tag = AN__SUM,
-        .val.an_sum = val,
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_sub(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__SUB,
+        .val.pair = {lhs, rhs},
     };
 }
 
-static an an_new_cmp(an_cmp val) {
-    return (an){
-        .tag = AN__CMP,
-        .val.an_cmp = val,
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_mul(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__MUL,
+        .val.pair = {lhs, rhs},
     };
 }
 
-static void an_drop(const an *self) {
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_div(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__DIV,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_rem(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__REM,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// val: an_expr
+static an_expr an_expr_new_not(box val) {
+    return (an_expr){
+        .tag = AN_EXPR__NOT,
+        .val.box = val,
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_and(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__AND,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_or(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__OR,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_xor(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__XOR,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_eq(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__EQ,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_ne(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__NE,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_lt(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__LT,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_gt(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__GT,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_le(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__LE,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_ge(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__GE,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+// lhs: an_expr
+// rhs: an_expr
+static an_expr an_expr_new_if(box lhs, box rhs) {
+    return (an_expr){
+        .tag = AN_EXPR__IF,
+        .val.pair = {lhs, rhs},
+    };
+}
+
+static void an_expr_drop(const an_expr *self) {
     switch (self->tag) {
-    case AN__VAR: {
-        an_var_drop(&self->val.an_var);
-        break;
-    }
-    case AN__VAL: {
+    case AN_EXPR__VAL: {
         an_val_drop(&self->val.an_val);
         break;
     }
-    case AN__LOG: {
-        an_log_drop(&self->val.an_log);
+    case AN_EXPR__NEG:
+    case AN_EXPR__NOT: {
+        an_expr_drop(box_data(self->val.box));
+        box_drop(self->val.box);
         break;
     }
-    case AN__PRO: {
-        an_pro_drop(&self->val.an_pro);
-        break;
-    }
-    case AN__SUM: {
-        an_sum_drop(&self->val.an_sum);
-        break;
-    }
-    case AN__CMP: {
-        an_cmp_drop(&self->val.an_cmp);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static bool an_is_expr(const an *self) {
-    switch (self->tag) {
-    case AN__VAL:
-    case AN__LOG:
-    case AN__PRO:
-    case AN__SUM:
-    case AN__CMP: {
-        return true;
-    }
-    default:
-        return false;
-    }
-}
-
-static void _an_print(const an *self, ast_printer *printer) {
-    switch (self->tag) {
-    case AN__VAR: {
-        an_var_print(&self->val.an_var, printer);
-        break;
-    }
-    case AN__VAL: {
-        an_val_print(&self->val.an_val, printer);
-        break;
-    }
-    case AN__LOG: {
-        an_log_print(&self->val.an_log, printer);
-        break;
-    }
-    case AN__PRO: {
-        an_pro_print(&self->val.an_pro, printer);
-        break;
-    }
-    case AN__SUM: {
-        an_sum_print(&self->val.an_sum, printer);
-        break;
-    }
-    case AN__CMP: {
-        an_cmp_print(&self->val.an_cmp, printer);
+    case AN_EXPR__ADD:
+    case AN_EXPR__SUB:
+    case AN_EXPR__MUL:
+    case AN_EXPR__DIV:
+    case AN_EXPR__REM:
+    case AN_EXPR__AND:
+    case AN_EXPR__OR:
+    case AN_EXPR__XOR:
+    case AN_EXPR__EQ:
+    case AN_EXPR__NE:
+    case AN_EXPR__LT:
+    case AN_EXPR__GT:
+    case AN_EXPR__LE:
+    case AN_EXPR__GE:
+    case AN_EXPR__IF: {
+        box x = self->val.pair[0];
+        an_expr_drop(box_data(x));
+        box_drop(x);
+        x = self->val.pair[1];
+        an_expr_drop(box_data(x));
+        box_drop(x);
         break;
     }
     default:
@@ -682,7 +410,106 @@ static void _an_print(const an *self, ast_printer *printer) {
     }
 }
 
-static void an_print(const an *self, bool tree) {
+static void _an_expr_print(const an_expr *, ast_printer *);
+static void _an_expr_print_un(ast_printer *printer, const an_expr *ex) {
+    _an_expr_print(ex, printer);
+}
+
+static void _an_expr_print_bin(ast_printer *printer, const an_expr **ex) {
+    _an_expr_print(ex[printer->index], printer);
+}
+
+static void _an_expr_print(const an_expr *self, ast_printer *printer) {
+    const char *op;
+    switch (self->tag) {
+    case AN_EXPR__VAL: {
+        an_val_print(&self->val.an_val, printer);
+        break;
+    }
+    case AN_EXPR__NEG: {
+        op = "-";
+        goto PRINT_UN;
+    }
+    case AN_EXPR__NOT: {
+        op = "!";
+        goto PRINT_UN;
+    }
+    PRINT_UN : {
+        const an_expr *ex = box_data(self->val.box);
+        ast_printer_print_ast_un(printer, op, HOF_WITH(_an_expr_print_un, ex));
+        break;
+    }
+    case AN_EXPR__ADD: {
+        op = "+";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__SUB: {
+        op = "-";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__MUL: {
+        op = "*";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__DIV: {
+        op = "/";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__REM: {
+        op = "%";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__AND: {
+        op = "&";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__OR: {
+        op = "|";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__XOR: {
+        op = "^";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__EQ: {
+        op = "==";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__NE: {
+        op = "!=";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__LT: {
+        op = "<";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__GT: {
+        op = ">";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__LE: {
+        op = "<=";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__GE: {
+        op = ">=";
+        goto PRINT_BIN;
+    }
+    case AN_EXPR__IF: {
+        op = "if";
+        goto PRINT_BIN;
+    }
+    PRINT_BIN : {
+        const an_expr *ex[] = {box_data(self->val.pair[0]), box_data(self->val.pair[1])};
+        ast_printer_print_ast_bin(printer, op, HOF_WITH(_an_expr_print_bin, ex));
+        break;
+    }
+    default:
+        UNREACHABLE;
+    }
+}
+
+static void an_expr_print(const an_expr *self, bool tree) {
     ast_printer printer = ast_printer_new(stdout, tree);
-    _an_print(self, &printer);
+    _an_expr_print(self, &printer);
 }

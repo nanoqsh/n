@@ -32,7 +32,3 @@ static void *hof_call(hof self, void *args) {
         return NULL;
     }
 }
-
-static wbool _fn_not(void *args, hof *fn) { return WBOOL_NOT(hof_call(*fn, args)); }
-
-static hof fn_not(hof *fn) { return HOF_WITH(_fn_not, fn); }

@@ -1,0 +1,65 @@
+TYPE -> name
+PATH -> name.* name
+VAR -> [~] name
+VAL -> num | flt | str | chr | bool | PATH
+TUPLE_ITEM -> [name] VAL | name=
+TUPLE -> [ TUPLE_ITEM,* ]
+OBJ -> PATH TUPLE
+
+EXPR ->
+      VAL
+    | -EXPR
+    | EXPR + EXPR
+    | EXPR - EXPR
+    | EXPR * EXPR
+    | EXPR / EXPR
+    | EXPR % EXPR
+    | !EXPR
+    | EXPR & EXPR
+    | EXPR | EXPR
+    | EXPR ^ EXPR
+    | EXPR == EXPR
+    | EXPR != EXPR
+    | EXPR < EXPR
+    | EXPR > EXPR
+    | EXPR <= EXPR
+    | EXPR >= EXPR
+    | EXPR if EXPR
+    | FN
+    | FN_CALL
+    | BLOCK_EXPR
+
+DECL -> let PAT [: TYPE] [= EXPR]
+DECL_TYPE -> type name TUPLE
+STATEMENT -> ITEM | EXPR
+BLOCK -> { STATEMENT\n* }
+BLOCK_EXPR -> BLOCK | IF | WHEN | FOR
+
+FN_CALL -> EXPR ( EXPR,* )
+FN_PAR -> PAT [: TYPE]
+FN -> (() | FN_PAR,+) BLOCK
+
+STR_PAT -> VAR | str
+VAL_PAT -> VAR | [-] VAL | STR_PAT STR_PAT+
+TUPLE_PAT -> [~] [ PAT_ALIAS,* [[PAT_ALIAS] .. ,] PAT_ALIAS,* ]
+OBJ_PAT -> PATH TUPLE_PAT
+PAT -> PAT_EXPR|+ | _
+PAT_ALIAS -> [let VAR =] PAT
+PAT_EXPR ->
+      BLOCK
+    | PATH
+    | TUPLE_PAT
+    | OBJ_PAT
+    | VAL_PAT
+    | VAL_PAT range
+    | range VAL_PAT
+    | VAL_PAT range VAL_PAT
+
+WHEN_ARM -> PAT_ALIAS BLOCK_EXPR
+WHEN -> when VAL { WHEN_ARM\n+ }
+
+IF_ARM -> (_ | EXPR) BLOCK_EXPR
+IF -> if ((EXPR BLOCK) | { IF_ARM\n+ })
+
+ITEM -> [attr\n*] DECL | DECL_TYPE
+CODE -> ITEM\n*

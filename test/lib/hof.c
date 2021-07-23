@@ -19,15 +19,7 @@ static void call_with() {
     ASSERT(hof_call(fn, &b));
 }
 
-static void not() {
-    hof fn = HOF(is_one);
-    u32 val = 1;
-    hof nfn = HOF_WITH(_fn_not, &fn);
-    ASSERT(!hof_call(nfn, &val));
-}
-
 void test_hof() {
     call();
     call_with();
-    not();
 }

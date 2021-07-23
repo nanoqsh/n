@@ -12,11 +12,9 @@ typedef struct {
     FILE *file;
     ast_printer_mode mode;
     word level;
+    word index;
     bool color;
 } ast_printer;
-
-typedef struct an an;
-static void _an_print(const an *, ast_printer *);
 
 static ast_printer ast_printer_new(FILE *file, bool tree) {
     return (ast_printer){
@@ -77,20 +75,21 @@ static void ast_printer_print_range(ast_printer *self) {
     _ast_printer_print_color_string(self, " .. ");
 }
 
-static void ast_printer_print_ast_unary(ast_printer *self, const an *ast, const char *op) {
+static void ast_printer_print_ast_un(ast_printer *self, const char *op, hof print) {
+    self->index = 0;
     switch (self->mode) {
     case AST_PRINTER_MODE_TREE: {
         ast_printer_print_node(self);
         ast_printer_print_string(self, op);
         ast_printer_nl(self);
         ++self->level;
-        _an_print(ast, self);
+        hof_call(print, self);
         --self->level;
         break;
     }
     case AST_PRINTER_MODE_PLAIN: {
         ast_printer_print_string(self, op);
-        _an_print(ast, self);
+        hof_call(print, self);
         break;
     }
     default:
@@ -98,24 +97,28 @@ static void ast_printer_print_ast_unary(ast_printer *self, const an *ast, const 
     }
 }
 
-static void ast_printer_print_ast_binary(ast_printer *self, const an **ast, const char *op) {
+static void ast_printer_print_ast_bin(ast_printer *self, const char *op, hof print) {
     switch (self->mode) {
     case AST_PRINTER_MODE_TREE: {
         ast_printer_print_node(self);
         ast_printer_print_string(self, op);
         ast_printer_nl(self);
         ++self->level;
-        _an_print(ast[0], self);
-        _an_print(ast[1], self);
+        self->index = 0;
+        hof_call(print, self);
+        self->index = 1;
+        hof_call(print, self);
         --self->level;
         break;
     }
     case AST_PRINTER_MODE_PLAIN: {
-        _an_print(ast[0], self);
+        self->index = 0;
+        hof_call(print, self);
         ast_printer_print_char(self, ' ');
         ast_printer_print_string(self, op);
         ast_printer_print_char(self, ' ');
-        _an_print(ast[1], self);
+        self->index = 1;
+        hof_call(print, self);
         break;
     }
     default:
@@ -123,26 +126,26 @@ static void ast_printer_print_ast_binary(ast_printer *self, const an **ast, cons
     }
 }
 
-static void ast_printer_print_ast_list(ast_printer *self, slice list, const char *sep, word size) {
+static void ast_printer_print_ast_list(ast_printer *self, const char *sep, hof print, word len) {
     switch (self->mode) {
     case AST_PRINTER_MODE_TREE: {
         ast_printer_print_node(self);
         ast_printer_print_range(self);
         ++self->level;
-        for (const u8 *item = slice_start(list); item != slice_end(list); item += size) {
+        for (self->index = 0; self->index < len; ++self->index) {
             ast_printer_print_node(self);
-            _an_print((const an *)item, self);
+            hof_call(print, self);
         }
         --self->level;
         break;
     }
     case AST_PRINTER_MODE_PLAIN: {
-        for (const u8 *item = slice_start(list); item != slice_end(list); item += size) {
-            if (item != slice_start(list)) {
+        for (self->index = 0; self->index < len; ++self->index) {
+            if (self->index != 0) {
                 ast_printer_print_string(self, sep);
             }
 
-            _an_print((const an *)item, self);
+            hof_call(print, self);
         }
         break;
     }
