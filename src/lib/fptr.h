@@ -14,4 +14,4 @@ static fptr fptr_new(void *data, word size) {
     };
 }
 
-#define FPTR(type, data) (fptr_new(data, sizeof(type)))
+#define FPTR(type, data) (fptr_new((void *)(data), sizeof(type)))

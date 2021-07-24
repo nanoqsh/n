@@ -208,8 +208,8 @@ typedef struct an_expr {
     an_expr_tag tag;
     union {
         an_val an_val;
-        box box;
-        box pair[2];
+        an_expr *an_expr;
+        an_expr *pair[2];
     } val;
 } an_expr;
 
@@ -220,154 +220,122 @@ static an_expr an_expr_new_val(an_val val) {
     };
 }
 
-// val: an_expr
-static an_expr an_expr_new_neg(box val) {
+static an_expr an_expr_new_neg(const an_expr *val) {
     return (an_expr){
         .tag = AN_EXPR__NEG,
-        .val.box = val,
+        .val.an_expr = ALLOC(an_expr, val),
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_add(box lhs, box rhs) {
+static an_expr an_expr_new_add(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__ADD,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_sub(box lhs, box rhs) {
+static an_expr an_expr_new_sub(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__SUB,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_mul(box lhs, box rhs) {
+static an_expr an_expr_new_mul(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__MUL,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_div(box lhs, box rhs) {
+static an_expr an_expr_new_div(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__DIV,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_rem(box lhs, box rhs) {
+static an_expr an_expr_new_rem(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__REM,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// val: an_expr
-static an_expr an_expr_new_not(box val) {
+static an_expr an_expr_new_not(const an_expr *val) {
     return (an_expr){
         .tag = AN_EXPR__NOT,
-        .val.box = val,
+        .val.an_expr = ALLOC(an_expr, val),
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_and(box lhs, box rhs) {
+static an_expr an_expr_new_and(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__AND,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_or(box lhs, box rhs) {
+static an_expr an_expr_new_or(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__OR,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_xor(box lhs, box rhs) {
+static an_expr an_expr_new_xor(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__XOR,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_eq(box lhs, box rhs) {
+static an_expr an_expr_new_eq(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__EQ,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_ne(box lhs, box rhs) {
+static an_expr an_expr_new_ne(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__NE,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_lt(box lhs, box rhs) {
+static an_expr an_expr_new_lt(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__LT,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_gt(box lhs, box rhs) {
+static an_expr an_expr_new_gt(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__GT,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_le(box lhs, box rhs) {
+static an_expr an_expr_new_le(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__LE,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_ge(box lhs, box rhs) {
+static an_expr an_expr_new_ge(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__GE,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
-// lhs: an_expr
-// rhs: an_expr
-static an_expr an_expr_new_if(box lhs, box rhs) {
+static an_expr an_expr_new_if(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__IF,
-        .val.pair = {lhs, rhs},
+        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
     };
 }
 
@@ -379,8 +347,8 @@ static void an_expr_drop(const an_expr *self) {
     }
     case AN_EXPR__NEG:
     case AN_EXPR__NOT: {
-        an_expr_drop(box_data(self->val.box));
-        box_drop(self->val.box);
+        an_expr_drop(self->val.an_expr);
+        DEL(self->val.an_expr);
         break;
     }
     case AN_EXPR__ADD:
@@ -398,12 +366,11 @@ static void an_expr_drop(const an_expr *self) {
     case AN_EXPR__LE:
     case AN_EXPR__GE:
     case AN_EXPR__IF: {
-        box x = self->val.pair[0];
-        an_expr_drop(box_data(x));
-        box_drop(x);
-        x = self->val.pair[1];
-        an_expr_drop(box_data(x));
-        box_drop(x);
+        for (word i = 0; i < ARRAY_SIZE(self->val.pair); ++i) {
+            const an_expr *ex = self->val.pair[i];
+            an_expr_drop(ex);
+            DEL(ex);
+        }
         break;
     }
     default:
@@ -436,7 +403,7 @@ static void _an_expr_print(const an_expr *self, ast_printer *printer) {
         goto PRINT_UN;
     }
     PRINT_UN : {
-        const an_expr *ex = box_data(self->val.box);
+        const an_expr *ex = self->val.an_expr;
         ast_printer_print_un(printer, op, HOF_WITH(_an_expr_print_un, ex));
         break;
     }
@@ -501,7 +468,7 @@ static void _an_expr_print(const an_expr *self, ast_printer *printer) {
         goto PRINT_BIN;
     }
     PRINT_BIN : {
-        const an_expr *ex[] = {box_data(self->val.pair[0]), box_data(self->val.pair[1])};
+        an_expr *const *ex = self->val.pair;
         ast_printer_print_bin(printer, op, HOF_WITH(_an_expr_print_bin, ex));
         break;
     }

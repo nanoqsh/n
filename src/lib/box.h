@@ -1,5 +1,6 @@
 #pragma once
 
+#include "alloc.h"
 #include "hof.h"
 #include "slice.h"
 #include "types.h"
@@ -11,18 +12,9 @@ typedef struct {
 } box;
 
 static box box_from_slice(slice s) {
-    word len = slice_len_bytes(s);
-    u8 *data;
-    if (len == 0) {
-        data = NULL;
-    } else {
-        data = malloc(len);
-        memcpy(data, s.start, len);
-    }
-
     return (box){
-        .data = data,
-        .len = len,
+        .data = alloc_from(slice_fptr(s)),
+        .len = slice_len_bytes(s),
     };
 }
 
@@ -34,7 +26,7 @@ static box box_from_slice(slice s) {
 
 static box box_empty() { return box_from_slice(slice_empty()); }
 
-static void box_drop(box self) { free(self.data); }
+static void box_drop(box self) { alloc_del(self.data); }
 
 static slice box_to_slice(box self) {
     void *start = self.data;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lib/alloc.h"
 #include "lib/assert.h"
 #include "lib/box.h"
 #include "lib/col.h"

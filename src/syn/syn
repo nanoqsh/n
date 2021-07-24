@@ -25,6 +25,8 @@ EXPR ->
     | EXPR <= EXPR
     | EXPR >= EXPR
     | EXPR if EXPR
+    | TUPLE
+    | OBJ
     | FN
     | FN_CALL
     | BLOCK_EXPR
@@ -37,10 +39,9 @@ BLOCK_EXPR -> BLOCK | IF | WHEN | FOR
 
 FN_CALL -> EXPR ( EXPR,* )
 FN_PAR -> PAT [: TYPE]
-FN -> (() | FN_PAR,+) BLOCK
+FN -> ( FN_PAR,* ) BLOCK
 
-STR_PAT -> VAR | str
-VAL_PAT -> VAR | [-] VAL | STR_PAT STR_PAT+
+VAL_PAT -> VAR | [-] VAL
 TUPLE_PAT -> [~] [ PAT_ALIAS,* [[PAT_ALIAS] .. ,] PAT_ALIAS,* ]
 OBJ_PAT -> PATH TUPLE_PAT
 PAT -> PAT_EXPR|+ | _

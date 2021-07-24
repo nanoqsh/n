@@ -1,6 +1,7 @@
 #pragma once
 
 #include "assert.h"
+#include "fptr.h"
 #include "hof.h"
 #include "range.h"
 #include "types.h"
@@ -36,6 +37,8 @@ static void *slice_end(slice self) { return self.end; }
 static word slice_len_bytes(slice self) { return self.end - self.start; }
 
 static word slice_len(slice self, word size) { return slice_len_bytes(self) / size; }
+
+static fptr slice_fptr(slice self) { return fptr_new(self.start, slice_len_bytes(self)); }
 
 static void slice_for_each(slice self, hof on_item, word size) {
     for (u8 *item = self.start; item != self.end; item += size) {
