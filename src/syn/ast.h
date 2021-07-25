@@ -223,119 +223,119 @@ static an_expr an_expr_new_val(an_val val) {
 static an_expr an_expr_new_neg(const an_expr *val) {
     return (an_expr){
         .tag = AN_EXPR__NEG,
-        .val.an_expr = ALLOC(an_expr, val),
+        .val.an_expr = ALC(an_expr, val),
     };
 }
 
 static an_expr an_expr_new_add(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__ADD,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_sub(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__SUB,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_mul(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__MUL,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_div(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__DIV,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_rem(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__REM,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_not(const an_expr *val) {
     return (an_expr){
         .tag = AN_EXPR__NOT,
-        .val.an_expr = ALLOC(an_expr, val),
+        .val.an_expr = ALC(an_expr, val),
     };
 }
 
 static an_expr an_expr_new_and(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__AND,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_or(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__OR,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_xor(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__XOR,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_eq(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__EQ,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_ne(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__NE,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_lt(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__LT,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_gt(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__GT,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_le(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__LE,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_ge(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__GE,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 
 static an_expr an_expr_new_if(const an_expr *lhs, const an_expr *rhs) {
     return (an_expr){
         .tag = AN_EXPR__IF,
-        .val.pair = {ALLOC(an_expr, lhs), ALLOC(an_expr, rhs)},
+        .val.pair = {ALC(an_expr, lhs), ALC(an_expr, rhs)},
     };
 }
 

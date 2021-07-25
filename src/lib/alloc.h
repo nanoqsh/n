@@ -14,8 +14,17 @@ static u8 *alloc_from(fptr val) {
     return ptr;
 }
 
-#define ALLOC(type, ptr) ((void *)alloc_from(FPTR(type, ptr)))
+#define ALC(type, ptr) ((type *)alloc_from(FPTR(type, ptr)))
 
 static void alloc_del(const u8 *ptr) { free((void *)ptr); }
 
 #define DEL(ptr) (alloc_del((const u8 *)(ptr)))
+
+static u8 *alloc_realloc(const u8 *ptr, word size) {
+    if (size == 0) {
+        alloc_del(ptr);
+        return NULL;
+    }
+
+    return realloc((void *)ptr, size);
+}

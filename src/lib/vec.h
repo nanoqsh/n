@@ -10,7 +10,7 @@ typedef struct {
 
 static vec vec_with_cap(word cap, word size) {
     return (vec){
-        .data = cap == 0 ? NULL : malloc(cap * size),
+        .data = alloc_no_init(cap * size),
         .cap = cap,
         .len = 0,
     };
@@ -25,7 +25,7 @@ static void vec_for_each(vec *self, hof on_item, word size) {
     }
 }
 
-static void vec_drop(vec *self) { free(self->data); }
+static void vec_drop(vec *self) { DEL(self->data); }
 
 static void vec_drop_with(vec *self, hof on_item, word size) {
     vec_for_each(self, on_item, size);
@@ -59,7 +59,8 @@ static void *vec_top(vec *self, word size) {
 }
 
 static void vec_realloc(vec *self, word cap, word size) {
-    self->data = cap == 0 ? NULL : realloc(self->data, cap * size);
+    DEBUG_ASSERT(cap != 0);
+    self->data = alloc_realloc(self->data, cap * size);
     self->cap = cap;
 }
 

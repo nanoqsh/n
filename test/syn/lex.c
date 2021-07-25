@@ -1,7 +1,7 @@
 #include "../test.h"
 
-#include "../../src/tools/lex.h"
-#include "../../src/tools/tok.h"
+#include "../../src/syn/lex.h"
+#include "../../src/syn/tok.h"
 #include <stdio.h>
 
 static void scan() {

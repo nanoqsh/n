@@ -1,6 +1,6 @@
 #include "../test.h"
 
-#include "../../src/tools/tok.h"
+#include "../../src/syn/tok.h"
 
 static void to_num_dec() {
     const char *ss[] = {

@@ -78,6 +78,11 @@ static slice slice_subslice(slice self, range rng, word size) {
     return SLICE(start, end);
 }
 
+static slice slice_tail(slice self, word index, word size) {
+    word len = slice_len(self, size);
+    return slice_subslice(self, RANGE(index, index + len), size);
+}
+
 static void slice_copy_to(slice self, void *out) {
     word len = slice_len_bytes(self);
     memcpy(out, self.start, len);
