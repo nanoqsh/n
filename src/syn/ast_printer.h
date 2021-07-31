@@ -9,19 +9,19 @@ typedef enum {
 } ast_printer_mode;
 
 typedef struct {
-    FILE *file;
     ast_printer_mode mode;
+    bool color;
+    FILE *file;
     word level;
     word index;
-    bool color;
 } ast_printer;
 
 static ast_printer ast_printer_new(FILE *file, bool tree) {
     return (ast_printer){
-        .file = file,
         .mode = tree ? AST_PRINTER_MODE_TREE : AST_PRINTER_MODE_PLAIN,
-        .level = 0,
         .color = true,
+        .file = file,
+        .level = 0,
     };
 }
 
